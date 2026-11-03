@@ -1,37 +1,39 @@
 # Push backend for Тревога UA
 
-This folder contains the separate Cloudflare Worker required for real Web Push while the site is closed. The existing Render service is static hosting and cannot run this backend.
+Cloudflare Worker для Web Push, общей истории тревог и серверной проверки двух открытых агрегаторов. Render Static Site не запускает этот backend.
 
-## What it does
+## Endpoints
 
-- Stores browser push subscriptions in Cloudflare KV.
-- Exposes `GET /config`, `POST /subscribe`, and `DELETE /subscribe`.
-- Checks the two public alert feeds every minute with a Cloudflare Cron Trigger.
-- Sends a push only when both feeds are available and fresh, and a region's state changes.
-- Establishes a baseline on its first successful check; it does not send a burst of old alerts on first start.
-- Does not send predicted routes or inferred threat directions.
+- `GET /health` — состояние Worker.
+- `GET /config` — публичный VAPID-ключ.
+- `GET /history?limit=100` — последние подтверждённые переходы тревога/отбой (до 300 записей).
+- `POST /subscribe` и `DELETE /subscribe` — регистрация и удаление Web Push-подписки.
 
-## One-time setup
+История хранится в KV по ключу `history:events`. Worker добавляет событие только при изменении статуса региона, если оба источника доступны, Tryvoha имеет свежую метку времени, а оба источника согласны. На первом успешном запуске создаётся базовый снимок; старые события задним числом не восстанавливаются.
 
-1. The KV namespace `TREVOGA_PUSH_SUBSCRIPTIONS` has already been created. Its ID is configured in `wrangler.toml`; do not create a second namespace or replace the ID.
-2. In this folder run `npm install`.
-3. Run `npm run generateKeys` once in a trusted local environment. Save the public key, private key, and subject privately. Never commit the private key or send it in chat.
-4. Set the Worker secrets in Cloudflare (the values must be entered privately):
-   - `npx wrangler secret put VAPID_PUBLIC_KEY`
-   - `npx wrangler secret put VAPID_PRIVATE_KEY`
-   - `npx wrangler secret put VAPID_SUBJECT`
-5. Deploy from this folder with `npm run deploy`. Cloudflare will provide a `workers.dev` URL.
-6. Set `window.TREVOGA_PUSH_API` in the repository's root `push-config.js` to that Worker URL. Render auto-deploys the static site from `main`.
-7. Open the site, press **Включить push при закрытом сайте**, and allow notifications. Install the PWA on iOS before subscribing; Android Chrome can subscribe from the browser.
+Push-сообщения помещаются в KV outbox и повторяются при временной ошибке отправки. Подписки с недействительными push-endpoint удаляются. Фильтры регионов сохраняются вместе с подпиской.
 
-## Security notes
+## Configuration
 
-- The VAPID private key belongs only in Cloudflare Worker secrets. Never put it in `push-config.js`, GitHub, or the browser.
-- The Worker only accepts subscription endpoints on HTTPS and known browser push-service hostnames.
-- Subscription endpoints are bearer secrets. Do not log them or publish the KV contents.
-- This starter backend uses an allowlisted site Origin. If the Render domain changes, update `ALLOWED_ORIGIN` in `wrangler.toml` and redeploy.
-- The public feeds are community aggregators and may share upstream data. Push is supplementary, not an official emergency alert service.
+KV namespace ID и cron уже указаны в `wrangler.toml`. Не создавай второй namespace и не меняй ID без необходимости.
 
-## Important
+В Cloudflare Worker Secrets должны быть заданы:
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_SUBJECT`
 
-The Worker code is prepared in the repository but is not live until it is deployed to a Cloudflare account, KV is bound, and VAPID secrets are configured. Until then the site's closed-tab push button remains hidden.
+Private key нельзя коммитить, помещать в браузер или отправлять в чат. Не генерируй новую пару ключей при обычном обновлении кода.
+
+## Deploy
+
+Из этой папки:
+```sh
+npm install
+npm run deploy
+```
+
+Публикация статического сайта из Render/GitHub не обновляет Worker. После изменения `src/index.js` Worker необходимо развернуть отдельно в Cloudflare. Убедись, что `ALLOWED_ORIGIN` совпадает с адресом сайта и KV binding `SUBSCRIPTIONS` подключён.
+
+## Safety
+
+Источники могут использовать общие первичные данные. Push и история — дополнительные функции, не официальная система экстренного оповещения и не гарантия доставки. Следуй официальным сиренам и указаниям служб.
