@@ -313,15 +313,12 @@ const regionLabelPane=map.createPane('regionLabelsPane');
 regionLabelPane.style.zIndex='655';
 regionLabelPane.style.pointerEvents='none';
 const regionLabelLayer=L.layerGroup().addTo(map);
-// На общем масштабе подписи областей намеренно скрыты: они физически не помещаются
-// в узкие полигоны и начинают перекрывать соседей. Показываем их при детальном просмотре.
+// Названия областей остаются видимыми на общем масштабе.
+// Подписи городов включаются отдельно при приближении, чтобы не смешивать два уровня карты.
 function updateRegionLabelVisibility(){
- // Обласні назви залишаються окремим шаром і видимі на всіх масштабах.
  regionLabelPane.style.display='';
+ cityLabelPane.style.display=map.getZoom()>=6.5?'':'none';
 }
-map.on('zoomend',updateRegionLabelVisibility);
-updateRegionLabelVisibility();
-
 const cityLabelPane=map.createPane('cityLabelsPane');
 cityLabelPane.style.zIndex='660';
 cityLabelPane.style.pointerEvents='none';
@@ -330,6 +327,8 @@ ukraineCityLabels.forEach(city=>{
  const icon=L.divIcon({className:'city-label-marker',html:'<span class="city-label-text">'+escapeHtml(city.name)+'</span>',iconSize:[160,24],iconAnchor:[80,12]});
  L.marker([city.lat,city.lng],{icon,pane:'cityLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(cityLabelLayer);
 });
+map.on('zoomend',updateRegionLabelVisibility);
+updateRegionLabelVisibility();
 
 function styleOf(s){return {color:s.partial?'#aebbc9':'#9fb0c8',weight:s.partial?1.8:1.05,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.92};}
 function labelOf(s){
@@ -451,7 +450,7 @@ document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventList
 fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
 .then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
 .then(data=>{
- const layer=L.geoJSON(data,{style:()=>({color:'#c4d2e4',weight:1.55,opacity:.98,fillColor:'#344c70',fillOpacity:.92}),onEachFeature:(f,l)=>{
+ const layer=L.geoJSON(data,{style:()=>({color:'#aebdce',weight:1.15,opacity:.92,fillColor:'#344c70',fillOpacity:.92}),onEachFeature:(f,l)=>{
   const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);const regionTitle=labelNameOfRegion(n);
   const labelBounds=l.getBounds();
   // Для каждой области берём геометрический центр полигона, а не центр прямоугольника:
@@ -462,8 +461,8 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   const labelFont=regionTitle.length>16?9:(regionTitle.length>12?10:11);
   const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text" style="width:'+labelWidth+'px;max-width:'+labelWidth+'px;font-size:'+labelFont+'px">'+escapeHtml(regionTitle)+'</span>',iconSize:[labelWidth,30],iconAnchor:[labelWidth/2,15]});
   L.marker(labelCenter,{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
-  l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
-  l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#c4d2e4',weight:1.55,opacity:.98,fillColor:'#344c70',fillOpacity:.92});});
+  l.on('mouseover',()=>l.setStyle({weight:2,color:'#d8e1ec'}));
+  l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#aebdce',weight:1.15,opacity:.92,fillColor:'#344c70',fillOpacity:.92});});
   l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
  }}).addTo(map);
  // Внешний контур Украины поверх тёмного фона в стиле карты-образца.
