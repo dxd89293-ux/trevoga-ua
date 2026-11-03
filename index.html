@@ -31,8 +31,8 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
-<span><i class="dot red"></i> Красный уровень</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Нет тревоги</span><span><i class="dot gray"></i> Нет данных</span>
-</div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога будет обозначаться штриховкой после подключения районных данных.</p></section>
+<span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span>
+</div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Статусы регионов</h2><div id="regions"><p>Загружаются границы областей…</p></div></section>
 <section class="card notice"><b>Важно</b><p>Карта является дополнительным информационным источником, а не системой экстренного оповещения. Не используй её для решения, идти ли в укрытие. Следуй сиренам и официальным указаниям служб. При сбое или устаревании данных показывается «Нет данных», а не «Тревоги нет».</p></section>
 <small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © OpenStreetMap.</small>
@@ -51,7 +51,7 @@ const slugMap={
 'миколаївська область':'mykolaivska','одеська область':'odeska','полтавська область':'poltavska','рівненська область':'rivnenska',
 'сумська область':'sumska','тернопільська область':'ternopilska','харківська область':'kharkivska','херсонська область':'khersonska',
 'хмельницька область':'khmelnytska','черкаська область':'cherkaska','чернівецька область':'chernivetska','чернігівська область':'chernihivska',
-'місто київ':'kyiv','київ':'kyiv','ар крим':'krymska','автономна республіка крим':'krymska','місто севастополь':'sevastopol','севастополь':'sevastopol'
+'місто київ':'kyiv','київ':'kyiv',
 };
 function norm(v){return String(v||'').toLocaleLowerCase('uk').replace(/[’'`]/g,'').replace(/\s+/g,' ').trim();}
 function nameOf(p){return p['name:uk']||p['name:ru']||p.name||'Регіон України';}
@@ -106,7 +106,7 @@ function calculate(n,t){
   const conflict=nActive!==tActive,partial=(nPart&&!nFull)||(tPart&&!tFull);
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&nActive)level='unknown';
-  const both=!!n&&tFresh;
+  const both=!!n&&tFresh&&!!slug;
   const known=both||(active&&(!!n||tFresh));
   out.push([name,{known,active,partial,conflict,level}]);
  }
