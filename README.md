@@ -15,7 +15,7 @@
 
 ## Разработка и публикация
 
-Подробная инструкция по Cloudflare Worker, KV и VAPID находится в [push-server/README.md](push-server/README.md). После изменения файлов Worker необходим отдельный `npm run deploy` из папки `push-server`; деплой статического сайта Worker не обновляет.
+Подробная инструкция по Cloudflare Worker, KV и VAPID находится в [push-server/README.md](push-server/README.md). Cloudflare Worker — отдельный сервис: деплой статического сайта его не обновляет. Если Cloudflare Workers Builds подключён к репозиторию, коммит в `main` запускает отдельную сборку/публикацию Worker; иначе используй `npm run deploy` из `push-server`.
 
 ## Важное предупреждение
 
