@@ -1,4 +1,4 @@
-const CACHE='trevoga-ua-shell-v7';
+const CACHE='trevoga-ua-shell-v8';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon.svg','./push-config.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{
