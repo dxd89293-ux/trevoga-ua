@@ -317,6 +317,12 @@ const regionLabelLayer=L.layerGroup().addTo(map);
 // Подписи городов включаются отдельно при приближении, чтобы не смешивать два уровня карты.
 function updateRegionLabelVisibility(){
  regionLabelPane.style.display='';
+ const compact=map.getSize().x<600&&map.getZoom()<6.5;
+ regionLabelLayer.eachLayer(marker=>{
+  const el=marker.getElement&&marker.getElement();
+  const label=el&&el.querySelector('.region-label-text');
+  if(label)label.textContent=compact?(label.dataset.short||label.dataset.full):label.dataset.full;
+ });
  cityLabelPane.style.display=map.getZoom()>=6.5?'':'none';
 }
 const cityLabelPane=map.createPane('cityLabelsPane');
@@ -328,6 +334,7 @@ ukraineCityLabels.forEach(city=>{
  L.marker([city.lat,city.lng],{icon,pane:'cityLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(cityLabelLayer);
 });
 map.on('zoomend',updateRegionLabelVisibility);
+map.on('resize',updateRegionLabelVisibility);
 updateRegionLabelVisibility();
 
 function styleOf(s){return {color:s.partial?'#aebbc9':'#9fb0c8',weight:s.partial?1.8:1.05,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.92};}
@@ -459,7 +466,9 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   try{if(typeof l.getCenter==='function'){const c=l.getCenter();if(c&&Number.isFinite(c.lat)&&Number.isFinite(c.lng))labelCenter=c;}}catch(e){}
   const labelWidth=regionTitle.length>16?120:(regionTitle.length>12?112:100);
   const labelFont=regionTitle.length>16?9:(regionTitle.length>12?10:11);
-  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text" style="width:'+labelWidth+'px;max-width:'+labelWidth+'px;font-size:'+labelFont+'px">'+escapeHtml(regionTitle)+'</span>',iconSize:[labelWidth,30],iconAnchor:[labelWidth/2,15]});
+  const shortNames={vinnytska:'ВІННИЦЯ',volynska:'ВОЛИНЬ',dnipropetrovska:'ДНІПРО',donetska:'ДОНЕЧЧИНА',zhytomyrska:'ЖИТОМИР',zakarpatska:'ЗАКАРПАТТЯ',zaporizka:'ЗАПОРІЖЖЯ','ivano-frankivska':'ФРАНКІВСЬК',kyivska:'КИЇВЩИНА',kirovohradska:'КРОПИВНИЦЬК',luhanska:'ЛУГАНЩИНА',lvivska:'ЛЬВІВ',mykolaivska:'МИКОЛАЇВ',odeska:'ОДЕСА',poltavska:'ПОЛТАВА',rivnenska:'РІВНЕ',sumska:'СУМИ',ternopilska:'ТЕРНОПІЛЬ',kharkivska:'ХАРКІВ',khersonska:'ХЕРСОН',khmelnytska:'ХМЕЛЬНИЦЬК',cherkaska:'ЧЕРКАСИ',chernivetska:'ЧЕРНІВЦІ',chernihivska:'ЧЕРНІГІВ',kyiv:'КИЇВ',crimea:'КРИМ',sevastopol:'СЕВАСТОПОЛЬ'};
+  const shortTitle=shortNames[slugOf(n)]||regionTitle;
+  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text" data-full="'+escapeHtml(regionTitle)+'" data-short="'+escapeHtml(shortTitle)+'" style="width:'+labelWidth+'px;max-width:'+labelWidth+'px;font-size:'+labelFont+'px">'+escapeHtml(regionTitle)+'</span>',iconSize:[labelWidth,30],iconAnchor:[labelWidth/2,15]});
   L.marker(labelCenter,{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2,color:'#d8e1ec'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#aebdce',weight:1.15,opacity:.92,fillColor:'#344c70',fillOpacity:.92});});
