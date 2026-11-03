@@ -168,15 +168,16 @@ export default {
       return json({ publicKey: env.VAPID_PUBLIC_KEY }, 200, cors);
     }
     if (url.pathname === "/subscribe" && request.method === "POST") {
-      let body, sub;
+      let body, rawSubscription;
       try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400, cors); }
-      sub = body?.subscription || body;
-      if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth || !allowedPushHost(sub.endpoint)) {
+      rawSubscription = body?.subscription || body;
+      if (!rawSubscription?.endpoint || !rawSubscription?.keys?.p256dh || !rawSubscription?.keys?.auth || !allowedPushHost(rawSubscription.endpoint)) {
         return json({ error: "Invalid push subscription" }, 400, cors);
       }
+      const { regions: ignoredRegions, ...sub } = rawSubscription;
       const regions = Array.isArray(body?.regions)
         ? [...new Set(body.regions.filter(slug => Object.prototype.hasOwnProperty.call(REGIONS, slug)))]
-        : null;
+        : Array.isArray(ignoredRegions) ? [...new Set(ignoredRegions.filter(slug => Object.prototype.hasOwnProperty.call(REGIONS, slug)))] : null;
       await env.SUBSCRIPTIONS.put(await keyFor(sub.endpoint), JSON.stringify({ subscription: sub, regions }));
       return json({ ok: true }, 201, cors);
     }
