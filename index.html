@@ -13,7 +13,7 @@ main{max-width:900px;margin:auto;padding:14px;display:grid;gap:12px}
 header{display:flex;align-items:center;gap:10px}header img{width:42px;height:42px}h1{font-size:21px;margin:0}p{margin:4px 0;color:var(--muted)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px}
 .status{font-size:18px;font-weight:700;margin:7px 0}.tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 9px;color:var(--muted);font-size:11px}
-#map{height:min(68vh,610px);min-height:350px;border-radius:11px;background:#dce5eb;overflow:hidden}
+#map{height:min(68vh,610px);min-height:350px;border-radius:11px;background:#101827;overflow:hidden}
 .legend{display:flex;flex-wrap:wrap;gap:9px 14px;margin-top:12px}.legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .dot{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid #718096}
 .red{background:#e34b4b}.yellow{background:#f2c94c}.green{background:#43a66b}.gray{background:#8995a5}
@@ -41,7 +41,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <script>
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 const map=L.map('map',{scrollWheelZoom:false}).setView([48.7,31.2],5.5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:10,attribution:'© OpenStreetMap'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
 const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
 const layers=new Map(), states=new Map();
 const slugMap={
