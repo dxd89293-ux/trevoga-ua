@@ -17,6 +17,15 @@ const REGIONS = {
 };
 
 const norm = value => String(value || "").toLocaleLowerCase("uk").replace(/[’'\x60]/g, "").replace(/\s+/g, " ").trim();
+function timestampOf(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  if (typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value))) {
+    const number = Number(value);
+    return number < 1e12 ? number * 1000 : number;
+  }
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), {
   status, headers: { "content-type": "application/json; charset=utf-8", ...headers }
 });
@@ -57,7 +66,7 @@ function currentStates(neptun, tryvoha) {
   const oblasts = Array.isArray(neptun?.oblasts) ? neptun.oblasts : [];
   const raions = Array.isArray(neptun?.raions) ? neptun.raions : [];
   const alerts = Array.isArray(tryvoha?.alerts) ? tryvoha.alerts : [];
-  const stamp = Date.parse(tryvoha?.updated_at || "");
+  const stamp = timestampOf(tryvoha?.updated_at || tryvoha?.updatedAt || tryvoha?.timestamp);
   const tryvohaFresh = Number.isFinite(stamp) && Date.now() - stamp >= -30000 && Date.now() - stamp < 180000;
   if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !tryvohaFresh) return null;
 
@@ -114,9 +123,14 @@ async function sendToAll(env, payload, regionSlug) {
       const delivered = await sendPushNotification(item.subscription, payload, vapid);
       if (!delivered) await env.SUBSCRIPTIONS.delete(item.key);
     } catch (error) {
-      // Do not log subscription endpoints: they are bearer secrets.
-      console.error("Web Push send failed", error?.statusCode || error?.name || "unknown");
-      allSent = false;
+      // Expired browser subscriptions should be removed; transient failures stay in the outbox.
+      if (error?.statusCode === 404 || error?.statusCode === 410) {
+        await env.SUBSCRIPTIONS.delete(item.key);
+      } else {
+        // Do not log subscription endpoints: they are bearer secrets.
+        console.error("Web Push send failed", error?.statusCode || error?.name || "unknown");
+        allSent = false;
+      }
     }
   }
   return allSent;
