@@ -42,30 +42,96 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 const map=L.map('map',{scrollWheelZoom:false}).setView([48.7,31.2],5.5);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:10,attribution:'© OpenStreetMap'}).addTo(map);
-const noDataStyle={color:'#46566b',weight:1.3,fillColor:'#8995a5',fillOpacity:.72};
-const regions=document.getElementById('regions');
-function regionStatus(){return 'НЕТ ДАННЫХ'}
-function nameOf(p){return p['name:ru']||p['name:uk']||p.name||'Регион Украины'}
-function addRegionList(features){
+const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
+const layers=new Map(), states=new Map();
+const slugMap={
+'вінницька область':'vinnytska','волинська область':'volynska','дніпропетровська область':'dnipropetrovska','донецька область':'donetska',
+'житомирська область':'zhytomyrska','закарпатська область':'zakarpatska','запорізька область':'zaporizka','івано-франківська область':'ivano-frankivska',
+'київська область':'kyivska','кіровоградська область':'kirovohradska','луганська область':'luhanska','львівська область':'lvivska',
+'миколаївська область':'mykolaivska','одеська область':'odeska','полтавська область':'poltavska','рівненська область':'rivnenska',
+'сумська область':'sumska','тернопільська область':'ternopilska','харківська область':'kharkivska','херсонська область':'khersonska',
+'хмельницька область':'khmelnytska','черкаська область':'cherkaska','чернівецька область':'chernivetska','чернігівська область':'chernihivska',
+'місто київ':'kyiv','київ':'kyiv','ар крим':'krymska','автономна республіка крим':'krymska','місто севастополь':'sevastopol','севастополь':'sevastopol'
+};
+function norm(v){return String(v||'').toLocaleLowerCase('uk').replace(/[’'`]/g,'').replace(/\s+/g,' ').trim();}
+function nameOf(p){return p['name:uk']||p['name:ru']||p.name||'Регіон України';}
+function slugOf(n){return slugMap[norm(n)]||null;}
+function timeOf(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
+function styleOf(s){return {color:s.partial?'#fff':'#46566b',weight:s.partial?2.3:1.3,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.76};}
+function labelOf(s){
+ if(!s||!s.known)return 'НЕТ ДАННЫХ';
+ if(!s.active)return 'НЕТ ТРЕВОГИ';
+ const part=s.partial?' · ЧАСТИЧНО':'';
+ if(s.conflict)return 'ТРЕВОГА · РАСХОЖДЕНИЕ'+part;
+ if(s.level==='yellow')return 'ЖЁЛТЫЙ УРОВЕНЬ'+part;
+ if(s.level==='red')return 'КРАСНЫЙ УРОВЕНЬ'+part;
+ return 'ТРЕВОГА · УРОВЕНЬ НЕ УТОЧНЁН'+part;
+}
+function applyState(name,s){
+ const key=norm(name),layer=layers.get(key);if(!layer)return;
+ s.color=!s.known?'#8995a5':(!s.active?'#43a66b':(s.level==='yellow'?'#f2c94c':'#e34b4b'));
+ states.set(key,s);layer.setStyle(styleOf(s));
+ const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
+ if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';}
+ const title=String(name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ layer.bindPopup('<b>'+title+'</b><br>Статус: '+labelOf(s));
+}
+function drawList(features){
  regions.innerHTML='';
- features.slice().sort((a,b)=>nameOf(a.properties).localeCompare(nameOf(b.properties),'ru')).forEach(f=>{
-  const n=nameOf(f.properties),el=document.createElement('div');el.className='region';
+ features.slice().sort((x,y)=>nameOf(x.properties).localeCompare(nameOf(y.properties),'uk')).forEach(f=>{
+  const n=nameOf(f.properties),key=norm(n),el=document.createElement('div');el.className='region';el.dataset.region=key;
   const title=document.createElement('b');title.textContent=n;
-  const pill=document.createElement('span');pill.className='pill';pill.textContent=regionStatus();
+  const pill=document.createElement('span');pill.className='pill';pill.textContent='НЕТ ДАННЫХ';
   el.append(title,pill);regions.append(el);
  });
 }
+async function getJson(url){
+ const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
+ try{const r=await fetch(url,{cache:'no-store',signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.json();}
+ finally{clearTimeout(t);}
+}
+function calculate(n,t){
+ const nO=n&&Array.isArray(n.oblasts)?n.oblasts:[],nR=n&&Array.isArray(n.raions)?n.raions:[];
+ const tA=t&&Array.isArray(t.alerts)?t.alerts:[];
+ const tFresh=!!t&&timeOf(t.updated_at)>0&&(Date.now()-timeOf(t.updated_at)<180000);
+ const out=[];
+ for(const [key,layer] of layers){
+  const name=layer.regionName,slug=slugOf(name);
+  const nFull=nO.some(x=>norm(x.name)===norm(name)||norm(x.oblast)===norm(name));
+  const nPart=nR.some(x=>norm(x.oblast)===norm(name));
+  const matches=slug?tA.filter(x=>x.slug===slug||x.oblast_slug===slug):[];
+  const tFull=matches.some(x=>x.slug===slug&&x.type!=='district');
+  const tPart=matches.some(x=>x.type==='district');
+  const nActive=nFull||nPart,tActive=matches.length>0,active=nActive||tActive;
+  const conflict=nActive!==tActive,partial=(nPart&&!nFull)||(tPart&&!tFull);
+  let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
+  if(!level&&nActive)level='unknown';
+  const both=!!n&&tFresh;
+  const known=both||(active&&(!!n||tFresh));
+  out.push([name,{known,active,partial,conflict,level}]);
+ }
+ return {out,tFresh};
+}
+async function refresh(){
+ const r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);
+ const n=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
+ const t=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)&&timeOf(r[1].value.updated_at)>0?r[1].value:null;
+ const data=calculate(n,t);
+ data.out.forEach(([name,state])=>applyState(name,state));
+ if(n&&data.tFresh){connection.textContent='Оба источника отвечают';updated.textContent='Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('uk-UA')+'. Расхождения отображаются отдельно.';}
+ else if(n||data.tFresh){connection.textContent='Доступен только один источник';updated.textContent='Активные тревоги показываются, но регионы без подтверждения отмечены серым.';}
+ else{connection.textContent='Нет связи с источниками';updated.textContent='Все регионы без подтверждённых данных отмечены серым.';}
+}
 fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
-.then(r=>{if(!r.ok)throw Error('geojson');return r.json()})
+.then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
 .then(data=>{
- const layer=L.geoJSON(data,{style:()=>noDataStyle,onEachFeature:(f,l)=>{
-  const n=nameOf(f.properties);l.bindPopup('<b>'+n.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</b><br>Статус: Нет данных');
+ const layer=L.geoJSON(data,{style:()=>({color:'#46566b',weight:1.3,fillColor:'#8995a5',fillOpacity:.76}),onEachFeature:(f,l)=>{
+  const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);l.bindPopup('<b>'+n+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
-  l.on('mouseout',()=>l.setStyle(noDataStyle));
+  l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#46566b',weight:1.3,fillColor:'#8995a5',fillOpacity:.76});});
  }}).addTo(map);
- map.fitBounds(layer.getBounds(),{padding:[8,8]});
- addRegionList(data.features||[]);
- document.getElementById('updated').textContent='Границы регионов загружены. Статусы появятся после защищённого подключения API.';
+ map.fitBounds(layer.getBounds(),{padding:[8,8]});drawList(data.features||[]);
+ refresh();setInterval(refresh,60000);
 })
-.catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь подключение к интернету.</p>';document.getElementById('updated').textContent='Карта регионов недоступна — нет данных.';});
+.catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь интернет.</p>';connection.textContent='Карта недоступна';updated.textContent='Нет данных.';});
 </script></body></html>
