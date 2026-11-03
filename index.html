@@ -313,6 +313,13 @@ const regionLabelPane=map.createPane('regionLabelsPane');
 regionLabelPane.style.zIndex='655';
 regionLabelPane.style.pointerEvents='none';
 const regionLabelLayer=L.layerGroup().addTo(map);
+// На общем масштабе подписи областей намеренно скрыты: они физически не помещаются
+// в узкие полигоны и начинают перекрывать соседей. Показываем их при детальном просмотре.
+function updateRegionLabelVisibility(){
+ regionLabelPane.style.display=map.getZoom()>=7?'':'none';
+}
+map.on('zoomend',updateRegionLabelVisibility);
+updateRegionLabelVisibility();
 
 const cityLabelPane=map.createPane('cityLabelsPane');
 cityLabelPane.style.zIndex='660';
