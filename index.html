@@ -34,7 +34,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <body><main>
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
 <section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button><button id="enablePush" type="button" style="background:#5a4a91;display:none">Включить push при закрытом сайте</button><button id="disablePush" type="button" style="background:#42516a;display:none">Отключить push</button></div><p id="pushSettings" style="font-size:12px;margin-top:7px">Push при закрытом сайте пока не настроен: нужен отдельный сервер.</p><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
-<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Сводка по Украине</h2><p id="summaryText">Ожидаем подтверждённые данные по регионам.</p><div class="summary-grid"><div class="summary-item red"><strong id="countRed">—</strong><span>Красный уровень</span></div><div class="summary-item yellow"><strong id="countYellow">—</strong><span>Жёлтый уровень</span></div><div class="summary-item green"><strong id="countClear">—</strong><span>Без тревоги</span></div><div class="summary-item gray"><strong id="countUnknown">—</strong><span>Нет данных</span></div></div><div class="source-grid"><div class="source-item"><b>NEPTUN</b><span id="sourceNeptun">Ожидаем ответ…</span></div><div class="source-item"><b>Tryvoha.online</b><span id="sourceTryvoha">Ожидаем ответ…</span></div></div><p id="lastCheck" style="font-size:11px;margin-top:9px">Последняя проверка: ещё не выполнялась.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Сводка по Украине</h2><p id="summaryText">Ожидаем подтверждённые данные по регионам.</p><div class="summary-grid"><div class="summary-item red"><strong id="countRed">—</strong><span>Красный уровень</span></div><div class="summary-item yellow"><strong id="countYellow">—</strong><span>Жёлтый уровень</span></div><div class="summary-item green"><strong id="countClear">—</strong><span>Без тревоги</span></div><div class="summary-item gray"><strong id="countUnknown">—</strong><span>Нет данных / расхождение</span></div></div><div class="source-grid"><div class="source-item"><b>NEPTUN</b><span id="sourceNeptun">Ожидаем ответ…</span></div><div class="source-item"><b>Tryvoha.online</b><span id="sourceTryvoha">Ожидаем ответ…</span></div></div><p id="lastCheck" style="font-size:11px;margin-top:9px">Последняя проверка: ещё не выполнялась.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div class="map-tools"><button type="button" data-map-view="neighbors" class="active">Соседние страны</button><button type="button" data-map-view="ukraine">Вся Украина</button><button type="button" data-map-view="regions">Области крупно</button></div><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
 <span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span><span><i class="dot" style="background:#d49a36"></i> Расхождение источников</span>
@@ -222,7 +222,7 @@ function timeOf(v){
  const n=Date.parse(v);return Number.isFinite(n)?n:0;
 }
 function getStartTime(items){
- const keys=['started_at','start_time','created_at','createdAt','timestamp','startTime','since'];
+ const keys=['started_at','start_time','created_at','createdAt','startTime','since'];
  for(const item of items||[])for(const key of keys){const n=timeOf(item&&item[key]);if(n>0&&n<=Date.now()+30000)return n;}
  return null;
 }
@@ -263,7 +263,6 @@ function labelOf(s){
  if(!s||!s.known)return 'НЕТ ДАННЫХ';
  if(!s.active)return 'НЕТ ТРЕВОГИ';
  const part=s.partial?' · ЧАСТИЧНО':'';
- if(s.conflict)return 'ТРЕВОГА · РАСХОЖДЕНИЕ'+part;
  if(s.level==='yellow')return 'ЖЁЛТЫЙ УРОВЕНЬ'+part;
  if(s.level==='red')return 'КРАСНЫЙ УРОВЕНЬ'+part;
  return 'ТРЕВОГА · УРОВЕНЬ НЕ УТОЧНЁН'+part;
@@ -299,8 +298,9 @@ async function getJson(url){
 function calculate(n,t){
  const nO=n&&Array.isArray(n.oblasts)?n.oblasts:[],nR=n&&Array.isArray(n.raions)?n.raions:[];
  const tA=t&&Array.isArray(t.alerts)?t.alerts:[];
- const age=t?Date.now()-timeOf(t.updated_at):Infinity;
- const tFresh=!!t&&timeOf(t.updated_at)>0&&age>=-30000&&age<180000;
+ const tStamp=t&&(t.updated_at||t.updatedAt||t.timestamp);
+ const age=t?Date.now()-timeOf(tStamp):Infinity;
+ const tFresh=!!t&&timeOf(tStamp)>0&&age>=-30000&&age<180000;
  const out=[];
  for(const [key,layer] of layers){
   const name=layer.regionName,slug=slugOf(name);
@@ -335,7 +335,8 @@ async function refresh(){
  const tCandidate=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)?r[1].value:null;
  const fresh=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return !stamp||(Date.now()-stamp>=-30000&&Date.now()-stamp<180000);};
  const n=nCandidate&&fresh(nCandidate)?nCandidate:null;
- const t=tCandidate&&timeOf(tCandidate.updated_at)>0&&fresh(tCandidate)?tCandidate:null;
+ const tStamp=tCandidate&&(tCandidate.updated_at||tCandidate.updatedAt||tCandidate.timestamp);
+ const t=tCandidate&&timeOf(tStamp)>0&&fresh(tCandidate)?tCandidate:null;
  const data=calculate(n,t);
  data.out.forEach(([name,state])=>applyState(name,state));
  firstRefresh=false;
@@ -354,9 +355,9 @@ async function refresh(){
  connection.textContent=n&&data.tFresh?'Оба источника отвечают':(n||data.tFresh?'Доступен только один источник':'Нет связи с источниками');
  const sourceTime=value=>{const stamp=timeOf(value);return stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время обновления в ответе не указано';};
  sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
- sourceTryvoha.textContent=t?'Свежий ответ; обновлено '+sourceTime(t.updated_at):(tCandidate?'Устарели данные; последнее обновление: '+sourceTime(tCandidate.updated_at):'Нет ответа или нет метки времени');
+ sourceTryvoha.textContent=t?'Свежий ответ; обновлено '+sourceTime(t.updated_at||t.updatedAt||t.timestamp):(tCandidate?'Устарели данные; последнее обновление: '+sourceTime(tCandidate.updated_at||tCandidate.updatedAt||tCandidate.timestamp):'Нет ответа или нет метки времени');
  lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
- updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
+ updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(timeOf(t.updated_at||t.updatedAt||t.timestamp)).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
  refreshInProgress=false;
 }
 let activeMapMode='neighbors';
