@@ -480,7 +480,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#ffffff',weight:4,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
  const ukraineBounds=layer.getBounds();
  window.trevogaMapBounds={ukraine:ukraineBounds};
- map.fitBounds(ukraineBounds,{padding:[12,12]});drawList(data.features||[]);renderRegionChoices(data.features||[]);
+ map.fitBounds(ukraineBounds,{padding:[12,12]});updateRegionLabelVisibility();drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
  refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
