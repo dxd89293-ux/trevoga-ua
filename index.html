@@ -162,7 +162,8 @@ function calculate(n,t){
   const conflict=statusSupported&&nActive!==tActive,partial=(nPart||tPart)&&!(nFull||tFull);
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&nActive)level='unknown';
-  const statusSupported=!!slug&&slug!=='crimea'&&slug!=='sevastopol';\n  const both=!!n&&tFresh&&statusSupported;
+  const statusSupported=!!slug&&slug!=='crimea'&&slug!=='sevastopol';
+  const both=!!n&&tFresh&&statusSupported;
   const known=both||(active&&(!!n||tFresh));
   out.push([name,{known,active,partial,conflict,level}]);
  }
