@@ -14,6 +14,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install push worker dependencies
+        working-directory: push-server
+        run: npm install --no-audit --no-fund
+      - name: Bundle push worker with Wrangler
+        working-directory: push-server
+        run: npx wrangler deploy --dry-run
       - name: Check JavaScript syntax and JSON
         run: |
           node --check sw.js
