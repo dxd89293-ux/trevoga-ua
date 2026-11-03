@@ -446,11 +446,16 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  const layer=L.geoJSON(data,{style:()=>({color:'#c4d2e4',weight:1.55,opacity:.98,fillColor:'#344c70',fillOpacity:.92}),onEachFeature:(f,l)=>{
   const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);const regionTitle=labelNameOfRegion(n);
   const labelBounds=l.getBounds();
-  const labelCenter=labelBounds.getCenter();
-  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text">'+escapeHtml(regionTitle)+'</span>',iconSize:[108,30],iconAnchor:[54,15]});
+  // Для каждой области берём геометрический центр полигона, а не центр прямоугольника:
+  // так подписи реже попадают за узкие/изогнутые границы. Для MultiPolygon оставляем безопасный fallback.
+  let labelCenter=labelBounds.getCenter();
+  try{if(typeof l.getCenter==='function'){const c=l.getCenter();if(c&&Number.isFinite(c.lat)&&Number.isFinite(c.lng))labelCenter=c;}}catch(e){}
+  const labelWidth=regionTitle.length>16?120:(regionTitle.length>12?112:100);
+  const labelFont=regionTitle.length>16?9:(regionTitle.length>12?10:11);
+  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text" style="width: + `${labelWidth}` + px;max-width: + `${labelWidth}` + px;font-size: + `${labelFont}` + px">'+escapeHtml(regionTitle)+'</span>',iconSize:[labelWidth,30],iconAnchor:[labelWidth/2,15]});
   L.marker(labelCenter,{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
-  l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#713b3b',weight:1.05,fillColor:'#555d65',fillOpacity:.88});});
+  l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#c4d2e4',weight:1.55,opacity:.98,fillColor:'#344c70',fillOpacity:.92});});
   l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
  }}).addTo(map);
  // Внешний контур Украины поверх тёмного фона в стиле карты-образца.
