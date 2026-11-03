@@ -22,7 +22,7 @@ header{display:flex;align-items:center;gap:10px}header img{width:42px;height:42p
 .region b{font-size:13px}.region small{color:var(--muted);font-size:11px}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#657080;color:white;white-space:nowrap}
 button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:white;font-size:14px;font-weight:600}
 .notice{border-left:3px solid #e6b653}small{color:var(--muted);line-height:1.5}
-.leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}.leaflet-tooltip.region-label{background:transparent;border:0;border-radius:0;box-shadow:none;color:#fff;font-size:13px;font-weight:800;padding:0;text-shadow:0 1px 2px rgba(5,12,25,.9),0 0 5px rgba(5,12,25,.75);white-space:nowrap;letter-spacing:.1px}.leaflet-tooltip.region-label:before{display:none}
+.leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}.leaflet-tooltip-pane{transition:none!important}.leaflet-tooltip.region-label{transition:none!important;background:transparent;border:0;border-radius:0;box-shadow:none;color:#fff;font-size:13px;font-weight:800;padding:0;text-shadow:0 1px 2px rgba(5,12,25,.9),0 0 5px rgba(5,12,25,.75);white-space:nowrap;letter-spacing:.1px}.leaflet-tooltip.region-label:before{display:none}
 @media(max-width:480px){main{padding:9px}#map{min-height:330px;height:58vh}}
 </style>
 </head>
@@ -40,7 +40,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./push-config.js"></script>
 <script>
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
-const map=L.map('map',{scrollWheelZoom:false}).setView([48.7,31.2],5.5);
+const map=L.map('map',{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,zoomSnap:0.5,zoomDelta:0.5}).setView([48.7,31.2],5.5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
 const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
 const layers=new Map(), states=new Map();
@@ -196,7 +196,8 @@ async function getJson(url){
 function calculate(n,t){
  const nO=n&&Array.isArray(n.oblasts)?n.oblasts:[],nR=n&&Array.isArray(n.raions)?n.raions:[];
  const tA=t&&Array.isArray(t.alerts)?t.alerts:[];
- const tFresh=!!t&&timeOf(t.updated_at)>0&&(Date.now()-timeOf(t.updated_at)<180000);
+ const age=t?Date.now()-timeOf(t.updated_at):Infinity;
+ const tFresh=!!t&&timeOf(t.updated_at)>0&&age>=-30000&&age<180000;
  const out=[];
  for(const [key,layer] of layers){
   const name=layer.regionName,slug=slugOf(name);
@@ -205,13 +206,13 @@ function calculate(n,t){
   const matches=slug?tA.filter(x=>x.slug===slug||x.oblast_slug===slug):[];
   const tFull=matches.some(x=>x.slug===slug&&x.type!=='district');
   const tPart=matches.some(x=>x.type==='district');
-  const nActive=nFull||nPart,tActive=matches.length>0,active=nActive||tActive;
-  // Сравниваем источники только если регион однозначно сопоставлен со slug Tryvoha.
-  // Иначе отсутствие совпадения — это не доказательство расхождения.
-  const conflict=statusSupported&&nActive!==tActive,partial=(nPart||tPart)&&!(nFull||tFull);
-  let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
-  if(!level&&nActive)level='unknown';
   const statusSupported=!!slug&&slug!=='crimea'&&slug!=='sevastopol';
+  const nActive=nFull||nPart,tActive=tFull||tPart,active=nActive||tActive;
+  // Сравниваем только два доступных источника; недоступный источник не считается расхождением.
+  const conflict=!!n&&tFresh&&statusSupported&&nActive!==tActive;
+  const partial=(nPart||tPart)&&!(nFull||tFull);
+  let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
+  if(!level&&active)level='unknown';
   const both=!!n&&tFresh&&statusSupported;
   const known=both||(active&&(!!n||tFresh));
   out.push([name,{known,active,partial,conflict,level}]);
