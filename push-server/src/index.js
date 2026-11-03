@@ -84,15 +84,22 @@ async function allSubscriptions(env) {
     for (const item of page.keys) {
       const value = await env.SUBSCRIPTIONS.get(item.name);
       if (value) {
-        try { result.push({ key: item.name, subscription: JSON.parse(value) }); }
-        catch { await env.SUBSCRIPTIONS.delete(item.name); }
+        try {
+          const parsed = JSON.parse(value);
+          const wrapped = parsed && parsed.subscription;
+          result.push({
+            key: item.name,
+            subscription: wrapped ? parsed.subscription : parsed,
+            regions: wrapped && Array.isArray(parsed.regions) ? parsed.regions : null
+          });
+        } catch { await env.SUBSCRIPTIONS.delete(item.name); }
       }
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
   return result;
 }
-async function sendToAll(env, payload) {
+async function sendToAll(env, payload, regionSlug) {
   const subs = await allSubscriptions(env);
   const vapid = {
     publicKey: env.VAPID_PUBLIC_KEY,
@@ -100,6 +107,7 @@ async function sendToAll(env, payload) {
     subject: env.VAPID_SUBJECT
   };
   for (const item of subs) {
+    if (Array.isArray(item.regions) && !item.regions.includes(regionSlug)) continue;
     try {
       const delivered = await sendPushNotification(item.subscription, payload, vapid);
       if (!delivered) await env.SUBSCRIPTIONS.delete(item.key);
@@ -140,7 +148,7 @@ async function checkAndNotify(env) {
       body: name + (active ? " — джерела зафіксували тривогу." : " — джерела більше не показують тривогу."),
       url: "/",
       tag: "trevoga-" + slug
-    });
+    }, slug);
   }
 }
 
@@ -159,12 +167,16 @@ export default {
       return json({ publicKey: env.VAPID_PUBLIC_KEY }, 200, cors);
     }
     if (url.pathname === "/subscribe" && request.method === "POST") {
-      let sub;
-      try { sub = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400, cors); }
+      let body, sub;
+      try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400, cors); }
+      sub = body?.subscription || body;
       if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth || !allowedPushHost(sub.endpoint)) {
         return json({ error: "Invalid push subscription" }, 400, cors);
       }
-      await env.SUBSCRIPTIONS.put(await keyFor(sub.endpoint), JSON.stringify(sub));
+      const regions = Array.isArray(body?.regions)
+        ? [...new Set(body.regions.filter(slug => Object.prototype.hasOwnProperty.call(REGIONS, slug)))]
+        : null;
+      await env.SUBSCRIPTIONS.put(await keyFor(sub.endpoint), JSON.stringify({ subscription: sub, regions }));
       return json({ ok: true }, 201, cors);
     }
     if (url.pathname === "/subscribe" && request.method === "DELETE") {
