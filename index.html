@@ -92,9 +92,11 @@ function recordLocalEvent(name,active){
  renderHistory(localHistory,'Локальная история — только изменения, замеченные этим устройством.');
 }
 function renderHistory(events,source){
- const list=(events||[]).slice().sort((a,b)=>Number(b.timestamp)-Number(a.timestamp)).slice(0,80);
+ const validEvents=(events||[]).filter(e=>e&&typeof e.region==='string'&&typeof e.active==='boolean'&&Number.isFinite(Number(e.timestamp)));
+ const sortedEvents=validEvents.slice().sort((a,b)=>Number(b.timestamp)-Number(a.timestamp));
  const today=new Date();today.setHours(0,0,0,0);
- const todayEvents=list.filter(e=>Number(e.timestamp)>=today.getTime());
+ const todayEvents=sortedEvents.filter(e=>Number(e.timestamp)>=today.getTime());
+ const list=sortedEvents.slice(0,80);
  document.getElementById('historyAlerts').textContent=todayEvents.filter(e=>e.active===true).length;
  document.getElementById('historyClears').textContent=todayEvents.filter(e=>e.active===false).length;
  historySource.textContent=source;
@@ -289,7 +291,7 @@ const ukraineCityLabels=[
  {name:'Севастополь',lat:44.6167,lng:33.5254}
 ];
 const cityLabelPane=map.createPane('cityLabelsPane');
-cityLabelPane.style.zIndex='650';
+cityLabelPane.style.zIndex='660';
 cityLabelPane.style.pointerEvents='none';
 const cityLabelLayer=L.layerGroup().addTo(map);
 ukraineCityLabels.forEach(city=>{
