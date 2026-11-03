@@ -183,7 +183,9 @@ async function checkAndNotify(env) {
       }
     }
   }
-  await deliverPending(env);
+  if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT) {
+    await deliverPending(env);
+  }
 }
 
 export default {
@@ -233,8 +235,7 @@ export default {
   },
   async scheduled(controller, env) {
     if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY || !env.VAPID_SUBJECT) {
-      console.error("Missing VAPID configuration");
-      return;
+      console.error("VAPID is not configured; recording shared alert history without push delivery.");
     }
     await checkAndNotify(env);
   }
