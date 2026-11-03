@@ -39,7 +39,8 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <div class="legend">
 <span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span>
 </div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
-<section class="card"><h2 style="font-size:17px;margin:0">Настройки уведомлений</h2><p>Выбери области, по которым нужны звук, уведомления и push. По умолчанию выбраны все регионы.</p><div class="setting-actions"><button id="selectAllRegions" type="button">Выбрать все</button><button id="clearRegions" type="button" style="background:#42516a">Снять выбор</button></div><div id="regionChoices" class="settings-grid"><small>Список загрузится вместе с картой.</small></div><p id="regionPreferenceStatus" style="font-size:11px;margin-top:8px">Настройки сохраняются на этом устройстве.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0">Настройки уведомлений</h2><p>Выбери способ оповещения и области, по которым нужны звук, уведомления и push. По умолчанию выбраны все регионы.</p>
+<div class="setting-actions"><label class="region-choice"><input id="soundToggle" type="checkbox" checked> Звук</label><label class="region-choice"><input id="vibrationToggle" type="checkbox" checked> Вибрация</label><label class="region-choice"><input id="browserToggle" type="checkbox" checked> Уведомления браузера</label></div><div class="setting-actions"><button id="selectAllRegions" type="button">Выбрать все</button><button id="clearRegions" type="button" style="background:#42516a">Снять выбор</button></div><div id="regionChoices" class="settings-grid"><small>Список загрузится вместе с картой.</small></div><p id="regionPreferenceStatus" style="font-size:11px;margin-top:8px">Настройки сохраняются на этом устройстве.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Статусы регионов</h2><div id="regions"><p>Загружаются границы областей…</p></div></section>
 <section class="card notice"><b>Важно</b><p>Карта является дополнительным информационным источником, а не системой экстренного оповещения. Не используй её для решения, идти ли в укрытие. Следуй сиренам и официальным указаниям служб. При сбое или устаревании данных показывается «Нет данных», а не «Тревоги нет».</p></section>
 <small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © OpenStreetMap.</small>
@@ -56,6 +57,12 @@ let hasSavedRegionSelection=localStorage.getItem('selectedRegions')!==null;
 let pushSubscription=null;
 const sourceNeptun=document.getElementById('sourceNeptun'),sourceTryvoha=document.getElementById('sourceTryvoha'),lastCheck=document.getElementById('lastCheck');
 const regionChoices=document.getElementById('regionChoices'),regionPreferenceStatus=document.getElementById('regionPreferenceStatus');
+const soundToggle=document.getElementById('soundToggle'),vibrationToggle=document.getElementById('vibrationToggle'),browserToggle=document.getElementById('browserToggle');
+let soundEnabled=localStorage.getItem('soundEnabled')!=='false',vibrationEnabled=localStorage.getItem('vibrationEnabled')!=='false',browserNotifyEnabled=localStorage.getItem('browserNotifyEnabled')!=='false';
+soundToggle.checked=soundEnabled;vibrationToggle.checked=vibrationEnabled;browserToggle.checked=browserNotifyEnabled;
+soundToggle.addEventListener('change',()=>{soundEnabled=soundToggle.checked;localStorage.setItem('soundEnabled',String(soundEnabled));});
+vibrationToggle.addEventListener('change',()=>{vibrationEnabled=vibrationToggle.checked;localStorage.setItem('vibrationEnabled',String(vibrationEnabled));});
+browserToggle.addEventListener('change',async()=>{browserNotifyEnabled=browserToggle.checked;localStorage.setItem('browserNotifyEnabled',String(browserNotifyEnabled));if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}});
 let alertsEnabled=localStorage.getItem('alertsEnabled')==='true';
 let firstRefresh=true,audioContext=null;
 const alertSettings=document.getElementById('alertSettings');
@@ -76,19 +83,19 @@ function beep(pattern){
 }
 function notifyChange(name,s,started){
  if(!alertsEnabled||!s.known||!isRegionSelected(name))return;
- if(navigator.vibrate)navigator.vibrate(started?[300,150,300]:[120,80,120]);
- beep(started?[.32,.32,.32]:[.16,.16]);
- if('Notification'in window&&Notification.permission==='granted'){
+ if(vibrationEnabled&&navigator.vibrate)navigator.vibrate(started?[300,150,300]:[120,80,120]);
+ if(soundEnabled)beep(started?[.32,.32,.32]:[.16,.16]);
+ if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='granted'){
   try{new Notification(started?'Воздушная тревога':'Отбой тревоги',{body:name+(started?' — зафиксирована тревога по данным источников.':' — тревога больше не отображается источниками.'),icon:'./icon.svg',tag:'alert-'+name,renotify:false});}catch(e){}
  }
 }
 enableAlertsButton.addEventListener('click',async()=>{
  alertsEnabled=true;localStorage.setItem('alertsEnabled','true');
  try{const Ctx=window.AudioContext||window.webkitAudioContext;if(Ctx){audioContext=audioContext||new Ctx();await audioContext.resume();}}catch(e){}
- if('Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
+ if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
  updateAlertLabel();beep([.12,.12]);
 });
-document.getElementById('testSound').addEventListener('click',()=>{if(!alertsEnabled){alertSettings.textContent='Сначала включи оповещения.';return;}beep([.12,.12,.12]);if(navigator.vibrate)navigator.vibrate(100);});
+document.getElementById('testSound').addEventListener('click',()=>{if(!alertsEnabled){alertSettings.textContent='Сначала включи оповещения.';return;}if(soundEnabled)beep([.12,.12,.12]);if(vibrationEnabled&&navigator.vibrate)navigator.vibrate(100);});
 updateAlertLabel();
 let deferredInstallPrompt=null;
 const installButton=document.getElementById('installApp');
@@ -133,7 +140,7 @@ pushButton.addEventListener('click',async()=>{
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeVapidKey(pushPublicKey)});
   pushSubscription=sub;
-  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),regions:[...selectedRegions]})});
+  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...sub.toJSON(),regions:[...selectedRegions]})});
   if(!response.ok)throw Error('Сервер не принял подписку.');
   disablePushButton.style.display='inline-block';
   pushSettings.textContent='Push подключён. Сервер сможет присылать уведомления при закрытом сайте, если браузер и телефон разрешают фоновые уведомления.';
@@ -193,7 +200,7 @@ function saveRegionSelection(){
 }
 function syncPushPreferences(){
  if(!pushApi||!pushSubscription)return;
- fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:pushSubscription.toJSON(),regions:[...selectedRegions]})})
+ fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...pushSubscription.toJSON(),regions:[...selectedRegions]})})
  .then(r=>{if(!r.ok)throw Error('HTTP '+r.status);pushSettings.textContent='Push-настройки регионов обновлены.';})
  .catch(()=>{pushSettings.textContent='Не удалось обновить фильтр push. Возможно, Worker ещё не обновлён.';});
 }
