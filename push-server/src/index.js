@@ -102,6 +102,7 @@ async function allSubscriptions(env) {
 }
 async function sendToAll(env, payload, regionSlug) {
   const subs = await allSubscriptions(env);
+  let allSent = true;
   const vapid = {
     publicKey: env.VAPID_PUBLIC_KEY,
     privateKey: env.VAPID_PRIVATE_KEY,
@@ -115,42 +116,74 @@ async function sendToAll(env, payload, regionSlug) {
     } catch (error) {
       // Do not log subscription endpoints: they are bearer secrets.
       console.error("Web Push send failed", error?.statusCode || error?.name || "unknown");
+      allSent = false;
     }
   }
+  return allSent;
+}
+async function appendHistory(env, event) {
+  let events = [];
+  try { events = JSON.parse(await env.SUBSCRIPTIONS.get("history:events") || "[]"); } catch { events = []; }
+  if (!Array.isArray(events)) events = [];
+  if (!events.some(item => item.id === event.id)) {
+    events.unshift(event);
+    await env.SUBSCRIPTIONS.put("history:events", JSON.stringify(events.slice(0, 300)));
+  }
+}
+async function deliverPending(env) {
+  let pending = [];
+  try { pending = JSON.parse(await env.SUBSCRIPTIONS.get("push:pending") || "[]"); } catch { pending = []; }
+  if (!Array.isArray(pending) || !pending.length) return;
+  const retry = [];
+  for (const item of pending.slice(0, 100)) {
+    const sent = await sendToAll(env, {
+      title: item.active ? "Повітряна тривога" : "Відбій повітряної тривоги",
+      body: item.region + (item.active ? " — джерела зафіксували тривогу." : " — джерела більше не показують тривогу."),
+      url: "/",
+      tag: item.id
+    }, item.slug);
+    if (!sent) retry.push(item);
+  }
+  await env.SUBSCRIPTIONS.put("push:pending", JSON.stringify(retry));
 }
 async function checkAndNotify(env) {
   const results = await Promise.allSettled([
     fetchJson("https://neptun.in.ua/api/v1/alerts"),
     fetchJson("https://tryvoha.online/api/v1/alerts")
   ]);
-  if (results.some(x => x.status !== "fulfilled")) return;
-  const states = currentStates(results[0].value, results[1].value);
-  if (!states) return;
+  const states = results.every(x => x.status === "fulfilled")
+    ? currentStates(results[0].value, results[1].value)
+    : null;
 
-  const baseline = await env.SUBSCRIPTIONS.get("state:baseline");
-  if (!baseline) {
-    await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
-    return;
+  if (states) {
+    const baseline = await env.SUBSCRIPTIONS.get("state:baseline");
+    if (!baseline) {
+      await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
+    } else {
+      let previous;
+      try { previous = JSON.parse(baseline); } catch { previous = null; }
+      if (!previous) {
+        await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
+      } else {
+        const pending = [];
+        for (const [slug, active] of Object.entries(states)) {
+          if (typeof active !== "boolean" || typeof previous[slug] !== "boolean" || previous[slug] === active) continue;
+          const event = { id: "trevoga-" + slug + "-" + (active ? "on" : "off") + "-" + Date.now(), slug, region: REGIONS[slug], active, timestamp: Date.now() };
+          await appendHistory(env, event);
+          pending.push(event);
+        }
+        if (pending.length) {
+          let queued = [];
+          try { queued = JSON.parse(await env.SUBSCRIPTIONS.get("push:pending") || "[]"); } catch { queued = []; }
+          if (!Array.isArray(queued)) queued = [];
+          await env.SUBSCRIPTIONS.put("push:pending", JSON.stringify([...queued, ...pending].slice(-100)));
+        }
+        // Save the new baseline only after transitions have been persisted to history/outbox.
+        await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
+      }
+    }
   }
-  let previous;
-  try { previous = JSON.parse(baseline); } catch { previous = null; }
-  if (!previous) {
-    await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
-    return;
-  }
-
-  // Persist a fresh, fully sourced snapshot before sending. No push is sent on first run.
-  await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
-  for (const [slug, active] of Object.entries(states)) {
-    if (typeof active !== "boolean" || typeof previous[slug] !== "boolean" || previous[slug] === active) continue;
-    const name = REGIONS[slug];
-    await sendToAll(env, {
-      title: active ? "Повітряна тривога" : "Відбій повітряної тривоги",
-      body: name + (active ? " — джерела зафіксували тривогу." : " — джерела більше не показують тривогу."),
-      url: "/",
-      tag: "trevoga-" + slug
-    }, slug);
-  }
+  await deliverPending(env);
 }
 
 export default {
@@ -162,7 +195,15 @@ export default {
     if (origin && !allowed) return json({ error: "Origin not allowed" }, 403);
 
     const url = new URL(request.url);
-    if (url.pathname === "/health" && request.method === "GET") return json({ ok: true });
+    if (url.pathname === "/health" && request.method === "GET") return json({ ok: true }, 200, cors);
+    if (url.pathname === "/history" && request.method === "GET") {
+      let events = [];
+      try { events = JSON.parse(await env.SUBSCRIPTIONS.get("history:events") || "[]"); } catch { events = []; }
+      if (!Array.isArray(events)) events = [];
+      const requested = Number(url.searchParams.get("limit") || 100);
+      const limit = Number.isFinite(requested) ? Math.max(1, Math.min(300, Math.floor(requested))) : 100;
+      return json({ events: events.slice(0, limit) }, 200, { ...cors, "cache-control": "no-store" });
+    }
     if (url.pathname === "/config" && request.method === "GET") {
       if (!env.VAPID_PUBLIC_KEY) return json({ error: "Push is not configured" }, 503, cors);
       return json({ publicKey: env.VAPID_PUBLIC_KEY }, 200, cors);
