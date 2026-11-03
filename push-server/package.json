@@ -1,0 +1,16 @@
+{
+  "name": "trevoga-ua-push",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "generateKeys": "node generate-vapid.mjs"
+  },
+  "dependencies": {
+    "@mmmike/web-push": "1.5.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
