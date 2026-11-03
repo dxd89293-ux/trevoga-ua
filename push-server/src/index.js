@@ -87,10 +87,11 @@ async function allSubscriptions(env) {
         try {
           const parsed = JSON.parse(value);
           const wrapped = parsed && parsed.subscription;
+          const { regions: savedRegions, ...legacySubscription } = parsed || {};
           result.push({
             key: item.name,
-            subscription: wrapped ? parsed.subscription : parsed,
-            regions: wrapped && Array.isArray(parsed.regions) ? parsed.regions : null
+            subscription: wrapped ? parsed.subscription : legacySubscription,
+            regions: Array.isArray(savedRegions) ? savedRegions : null
           });
         } catch { await env.SUBSCRIPTIONS.delete(item.name); }
       }
