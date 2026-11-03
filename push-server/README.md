@@ -13,17 +13,16 @@ This folder contains the separate Cloudflare Worker required for real Web Push w
 
 ## One-time setup
 
-1. Create a Cloudflare account, then create a KV namespace named for example `TREVOGA_PUSH_SUBSCRIPTIONS` with `npx wrangler kv namespace create TREVOGA_PUSH_SUBSCRIPTIONS` (run from this folder). Copy the returned namespace ID into `wrangler.toml`.
-2. Replace `REPLACE_WITH_CLOUDFLARE_KV_NAMESPACE_ID` in `wrangler.toml` with that namespace ID.
-3. In this folder run `npm install`.
-4. Run `npm run generateKeys` once. Save the three output values privately. Never commit the private key.
-5. Set the Worker secrets:
+1. The KV namespace `TREVOGA_PUSH_SUBSCRIPTIONS` has already been created. Its ID is configured in `wrangler.toml`; do not create a second namespace or replace the ID.
+2. In this folder run `npm install`.
+3. Run `npm run generateKeys` once in a trusted local environment. Save the public key, private key, and subject privately. Never commit the private key or send it in chat.
+4. Set the Worker secrets in Cloudflare (the values must be entered privately):
    - `npx wrangler secret put VAPID_PUBLIC_KEY`
    - `npx wrangler secret put VAPID_PRIVATE_KEY`
    - `npx wrangler secret put VAPID_SUBJECT`
-6. Deploy with `npm run deploy`. Cloudflare will provide a `workers.dev` URL.
-7. Open the repository's root `push-config.js` and set `window.TREVOGA_PUSH_API` to that URL, then commit the change. Render auto-deploys the static site from `main`.
-8. Open the site, press **Включить push при закрытом сайте**, and allow notifications. Install the PWA on iOS before subscribing; Android Chrome can subscribe from the browser.
+5. Deploy from this folder with `npm run deploy`. Cloudflare will provide a `workers.dev` URL.
+6. Set `window.TREVOGA_PUSH_API` in the repository's root `push-config.js` to that Worker URL. Render auto-deploys the static site from `main`.
+7. Open the site, press **Включить push при закрытом сайте**, and allow notifications. Install the PWA on iOS before subscribing; Android Chrome can subscribe from the browser.
 
 ## Security notes
 
