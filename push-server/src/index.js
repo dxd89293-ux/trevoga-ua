@@ -68,7 +68,11 @@ function currentStates(neptun, tryvoha) {
     const matches = alerts.filter(x => x.slug === slug || x.oblast_slug === slug);
     const tFull = matches.some(x => x.slug === slug && x.type !== "district");
     const tPart = matches.some(x => x.type === "district");
-    states[slug] = nFull || nPart || tFull || tPart;
+    const nActive = nFull || nPart;
+    const tActive = tFull || tPart;
+    // Notify only when both independent feeds agree. A disagreement is unknown,
+    // so it resets the baseline for this region without producing a push.
+    states[slug] = nActive === tActive ? nActive : null;
   }
   return states;
 }
