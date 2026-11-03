@@ -93,7 +93,7 @@ enableAlertsButton.addEventListener('click',async()=>{
  alertsEnabled=true;localStorage.setItem('alertsEnabled','true');
  try{const Ctx=window.AudioContext||window.webkitAudioContext;if(Ctx){audioContext=audioContext||new Ctx();await audioContext.resume();}}catch(e){}
  if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
- updateAlertLabel();beep([.12,.12]);
+ updateAlertLabel();if(soundEnabled)beep([.12,.12]);
 });
 document.getElementById('testSound').addEventListener('click',()=>{if(!alertsEnabled){alertSettings.textContent='Сначала включи оповещения.';return;}if(soundEnabled)beep([.12,.12,.12]);if(vibrationEnabled&&navigator.vibrate)navigator.vibrate(100);});
 updateAlertLabel();
@@ -286,8 +286,11 @@ function calculate(n,t){
 async function refresh(){
  const checkedAt=Date.now();
  const r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);
- const n=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
- const t=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)&&timeOf(r[1].value.updated_at)>0?r[1].value:null;
+ const nCandidate=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
+ const tCandidate=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)?r[1].value:null;
+ const fresh=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return !stamp||(Date.now()-stamp>=-30000&&Date.now()-stamp<180000);};
+ const n=nCandidate&&fresh(nCandidate)?nCandidate:null;
+ const t=tCandidate&&timeOf(tCandidate.updated_at)>0&&fresh(tCandidate)?tCandidate:null;
  const data=calculate(n,t);
  data.out.forEach(([name,state])=>applyState(name,state));
  firstRefresh=false;
@@ -304,8 +307,8 @@ async function refresh(){
  document.getElementById('summaryText').textContent=activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':(unknown?'Подтверждённых активных тревог нет; нет данных по '+unknown+' регионам.':'Подтверждённые активные тревоги не обнаружены.'));
  connection.textContent=n&&data.tFresh?'Оба источника отвечают':(n||data.tFresh?'Доступен только один источник':'Нет связи с источниками');
  const sourceTime=value=>{const stamp=timeOf(value);return stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время обновления в ответе не указано';};
- sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):'Нет ответа';
- sourceTryvoha.textContent=t?'Ответ получен; '+sourceTime(t.updated_at):'Нет свежего ответа (старше 3 минут или ошибка)';
+ sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
+ sourceTryvoha.textContent=t?'Свежий ответ; обновлено '+sourceTime(t.updated_at):(tCandidate?'Устарели данные; последнее обновление: '+sourceTime(tCandidate.updated_at):'Нет ответа или нет метки времени');
  lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
  updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
 }
