@@ -324,7 +324,7 @@ updateRegionLabelVisibility();
 const cityLabelPane=map.createPane('cityLabelsPane');
 cityLabelPane.style.zIndex='660';
 cityLabelPane.style.pointerEvents='none';
-const cityLabelLayer=L.layerGroup();
+const cityLabelLayer=L.layerGroup().addTo(map);
 ukraineCityLabels.forEach(city=>{
  const icon=L.divIcon({className:'city-label-marker',html:'<span class="city-label-text">'+escapeHtml(city.name)+'</span>',iconSize:[160,24],iconAnchor:[80,12]});
  L.marker([city.lat,city.lng],{icon,pane:'cityLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(cityLabelLayer);
