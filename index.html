@@ -28,7 +28,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 </head>
 <body><main>
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
-<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p></section>
+<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button></div><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
 <span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span>
@@ -44,6 +44,39 @@ const map=L.map('map',{scrollWheelZoom:false}).setView([48.7,31.2],5.5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
 const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
 const layers=new Map(), states=new Map();
+let alertsEnabled=localStorage.getItem('alertsEnabled')==='true';
+let firstRefresh=true,audioContext=null;
+const alertSettings=document.getElementById('alertSettings');
+const enableAlertsButton=document.getElementById('enableAlerts');
+function updateAlertLabel(){
+ alertSettings.textContent=alertsEnabled?'Звук и оповещения включены. Уведомления браузера: '+(Notification.permission==='granted'?'разрешены':Notification.permission==='denied'?'запрещены':'не запрошены')+'.':'Оповещения выключены. Нажми «Включить звук и уведомления».';
+ enableAlertsButton.textContent=alertsEnabled?'Оповещения включены':'Включить звук и уведомления';
+}
+function beep(pattern){
+ if(!alertsEnabled)return;
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+  audioContext=audioContext||new Ctx();if(audioContext.state==='suspended')audioContext.resume();
+  let at=audioContext.currentTime;
+  pattern.forEach((duration,i)=>{const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type='sine';osc.frequency.value=i%2?660:880;gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.16,at+.025);gain.gain.setValueAtTime(.16,at+duration-.04);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);osc.connect(gain);gain.connect(audioContext.destination);osc.start(at);osc.stop(at+duration);at+=duration+.12;});
+ }catch(e){}
+}
+function notifyChange(name,s,started){
+ if(!alertsEnabled||!s.known)return;
+ if(navigator.vibrate)navigator.vibrate(started?[300,150,300]:[120,80,120]);
+ beep(started?[.32,.32,.32]:[.16,.16]);
+ if('Notification'in window&&Notification.permission==='granted'){
+  try{new Notification(started?'Воздушная тревога':'Отбой тревоги',{body:name+(started?' — зафиксирована тревога по данным источников.':' — тревога больше не отображается источниками.'),icon:'./icon.svg',tag:'alert-'+name,renotify:false});}catch(e){}
+ }
+}
+enableAlertsButton.addEventListener('click',async()=>{
+ alertsEnabled=true;localStorage.setItem('alertsEnabled','true');
+ try{const Ctx=window.AudioContext||window.webkitAudioContext;if(Ctx){audioContext=audioContext||new Ctx();await audioContext.resume();}}catch(e){}
+ if('Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
+ updateAlertLabel();beep([.12,.12]);
+});
+document.getElementById('testSound').addEventListener('click',()=>{if(!alertsEnabled){alertSettings.textContent='Сначала включи оповещения.';return;}beep([.12,.12,.12]);if(navigator.vibrate)navigator.vibrate(100);});
+updateAlertLabel();
 const slugMap={
 'вінницька область':'vinnytska','волинська область':'volynska','дніпропетровська область':'dnipropetrovska','донецька область':'donetska',
 'житомирська область':'zhytomyrska','закарпатська область':'zakarpatska','запорізька область':'zaporizka','івано-франківська область':'ivano-frankivska',
@@ -75,6 +108,8 @@ function labelOf(s){
 }
 function applyState(name,s){
  const key=norm(name),layer=layers.get(key);if(!layer)return;
+ const previous=states.get(key);
+ if(!firstRefresh&&previous&&previous.known&&s.known&&previous.active!==s.active)notifyChange(name,s,s.active);
  s.color=!s.known?'#8995a5':(!s.active?'#43a66b':(s.level==='yellow'?'#f2c94c':'#e34b4b'));
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
@@ -126,6 +161,7 @@ async function refresh(){
  const t=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)&&timeOf(r[1].value.updated_at)>0?r[1].value:null;
  const data=calculate(n,t);
  data.out.forEach(([name,state])=>applyState(name,state));
+ firstRefresh=false;
  if(n&&data.tFresh){connection.textContent='Оба источника отвечают';updated.textContent='Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('uk-UA')+'. Расхождения отображаются отдельно.';}
  else if(n||data.tFresh){connection.textContent='Доступен только один источник';updated.textContent='Активные тревоги показываются, но регионы без подтверждения отмечены серым.';}
  else{connection.textContent='Нет связи с источниками';updated.textContent='Все регионы без подтверждённых данных отмечены серым.';}
