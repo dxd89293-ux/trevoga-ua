@@ -68,7 +68,9 @@ function currentStates(neptun, tryvoha) {
   const alerts = Array.isArray(tryvoha?.alerts) ? tryvoha.alerts : [];
   const stamp = timestampOf(tryvoha?.updated_at || tryvoha?.updatedAt || tryvoha?.timestamp);
   const tryvohaFresh = Number.isFinite(stamp) && Date.now() - stamp >= -30000 && Date.now() - stamp < 180000;
-  if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !tryvohaFresh) return null;
+  const neptunStamp = timestampOf(neptun?.updated_at || neptun?.updatedAt || neptun?.timestamp);
+  const neptunFresh = !neptunStamp || (Date.now() - neptunStamp >= -30000 && Date.now() - neptunStamp < 180000);
+  if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !tryvohaFresh || !neptunFresh) return null;
 
   const states = {};
   for (const [slug, name] of Object.entries(REGIONS)) {
