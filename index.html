@@ -1,67 +1,71 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101827">
-  <meta name="description" content="Личная карта воздушных тревог Киева и Киевской области">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <title>Тревога UA</title>
-  <style>
-    :root{color-scheme:dark;--bg:#101827;--panel:#1b283b;--line:#314158;--muted:#aab8ca;--text:#f4f7fb}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px system-ui, sans-serif}
-    main{max-width:620px;margin:auto;padding:18px;display:grid;gap:14px}
-    header{display:flex;align-items:center;gap:12px}header img{width:48px;height:48px}
-    h1{font-size:23px;margin:0}p{margin:4px 0;color:var(--muted)}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
-    .status{font-size:20px;font-weight:700;margin:8px 0}
-    .tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:5px 10px;color:var(--muted);font-size:12px}
-    .region{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid var(--line)}
-    .region:first-of-type{border-top:0}.value{color:#f6c86b;font-size:13px}
-    button{width:100%;border:0;border-radius:12px;padding:13px;background:#315d9b;color:white;font-size:16px;font-weight:600}
-    button:disabled{opacity:.55}small{color:var(--muted);line-height:1.5}
-    .notice{border-left:3px solid #e6b653;padding-left:12px}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827"><meta name="description" content="Карта воздушных тревог по областям Украины">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<title>Тревога UA — карта Украины</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--panel:#1b283b;--line:#314158;--muted:#aab8ca;--text:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif}
+main{max-width:900px;margin:auto;padding:14px;display:grid;gap:12px}
+header{display:flex;align-items:center;gap:10px}header img{width:42px;height:42px}h1{font-size:21px;margin:0}p{margin:4px 0;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px}
+.status{font-size:18px;font-weight:700;margin:7px 0}.tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 9px;color:var(--muted);font-size:11px}
+#map{height:min(68vh,610px);min-height:350px;border-radius:11px;background:#dce5eb;overflow:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:9px 14px;margin-top:12px}.legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid #718096}
+.red{background:#e34b4b}.yellow{background:#f2c94c}.green{background:#43a66b}.gray{background:#8995a5}
+#regions{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;margin-top:12px}
+.region{border:1px solid var(--line);border-radius:10px;padding:9px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.region b{font-size:13px}.region small{color:var(--muted);font-size:11px}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#657080;color:white;white-space:nowrap}
+button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:white;font-size:14px;font-weight:600}
+.notice{border-left:3px solid #e6b653}small{color:var(--muted);line-height:1.5}
+.leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}
+@media(max-width:480px){main{padding:9px}#map{min-height:330px;height:58vh}}
+</style>
 </head>
-<body>
-<main>
-  <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Личная версия · Киев и область</p></div><span class="tag" style="margin-left:auto">ТЕСТ</span></header>
-  <section class="card">
-    <div class="tag">Состояние подключения</div>
-    <div class="status" id="overall">Нет подключения к источникам</div>
-    <p id="updated">Реальные данные ещё не подключены</p>
-  </section>
-  <section class="card">
-    <h2 style="font-size:18px;margin:0 0 8px">Мои регионы</h2>
-    <div class="region"><div><b>Киев</b><p>Статус ожидает подключения</p></div><span class="value">НЕТ ДАННЫХ</span></div>
-    <div class="region"><div><b>Киевская область</b><p>Статус ожидает подключения</p></div><span class="value">НЕТ ДАННЫХ</span></div>
-  </section>
-  <section class="card">
-    <h2 style="font-size:18px;margin:0 0 8px">Уведомления</h2>
-    <p style="margin-bottom:12px">Разрешение можно запросить после установки. Пока сервер и проверенные источники не подключены, уведомления о тревоге не отправляются.</p>
-    <button id="notify">Разрешить уведомления</button>
-    <p id="notifyResult" aria-live="polite"></p>
-  </section>
-  <section class="card notice">
-    <b>Важно</b>
-    <p>Это стартовая оболочка, а не действующая система оповещения. Не используй её для решения, идти ли в укрытие. Следуй сигналам сирен, официальным оповещениям и указаниям служб.</p>
-  </section>
-  <small>Версия 0.1 · Нет GPS-слежения · Данные не передаются с телефона</small>
+<body><main>
+<header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
+<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
+<div class="legend">
+<span><i class="dot red"></i> Красный уровень</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Нет тревоги</span><span><i class="dot gray"></i> Нет данных</span>
+</div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога будет обозначаться штриховкой после подключения районных данных.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0">Статусы регионов</h2><div id="regions"><p>Загружаются границы областей…</p></div></section>
+<section class="card notice"><b>Важно</b><p>Карта является дополнительным информационным источником, а не системой экстренного оповещения. Не используй её для решения, идти ли в укрытие. Следуй сиренам и официальным указаниям служб. При сбое или устаревании данных показывается «Нет данных», а не «Тревоги нет».</p></section>
+<small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © OpenStreetMap.</small>
 </main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
-  const btn=document.getElementById('notify');
-  btn.addEventListener('click', async()=>{
-    const out=document.getElementById('notifyResult');
-    if(!('Notification' in window)){out.textContent='Этот браузер не поддерживает уведомления.';return;}
-    try{
-      const permission=await Notification.requestPermission();
-      out.textContent=permission==='granted'?'Разрешение получено. Реальные оповещения появятся только после подключения сервера.': 'Разрешение не выдано.';
-    }catch(e){out.textContent='Не удалось запросить разрешение.';}
-  });
-</script>
-</body>
-</html>
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+const map=L.map('map',{scrollWheelZoom:false}).setView([48.7,31.2],5.5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:10,attribution:'© OpenStreetMap'}).addTo(map);
+const noDataStyle={color:'#46566b',weight:1.3,fillColor:'#8995a5',fillOpacity:.72};
+const regions=document.getElementById('regions');
+function regionStatus(){return 'НЕТ ДАННЫХ'}
+function nameOf(p){return p['name:ru']||p['name:uk']||p.name||'Регион Украины'}
+function addRegionList(features){
+ regions.innerHTML='';
+ features.slice().sort((a,b)=>nameOf(a.properties).localeCompare(nameOf(b.properties),'ru')).forEach(f=>{
+  const n=nameOf(f.properties),el=document.createElement('div');el.className='region';
+  const title=document.createElement('b');title.textContent=n;
+  const pill=document.createElement('span');pill.className='pill';pill.textContent=regionStatus();
+  el.append(title,pill);regions.append(el);
+ });
+}
+fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
+.then(r=>{if(!r.ok)throw Error('geojson');return r.json()})
+.then(data=>{
+ const layer=L.geoJSON(data,{style:()=>noDataStyle,onEachFeature:(f,l)=>{
+  const n=nameOf(f.properties);l.bindPopup('<b>'+n.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</b><br>Статус: Нет данных');
+  l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
+  l.on('mouseout',()=>l.setStyle(noDataStyle));
+ }}).addTo(map);
+ map.fitBounds(layer.getBounds(),{padding:[8,8]});
+ addRegionList(data.features||[]);
+ document.getElementById('updated').textContent='Границы регионов загружены. Статусы появятся после защищённого подключения API.';
+})
+.catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь подключение к интернету.</p>';document.getElementById('updated').textContent='Карта регионов недоступна — нет данных.';});
+</script></body></html>
