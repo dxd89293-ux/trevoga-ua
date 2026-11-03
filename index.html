@@ -333,7 +333,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
 .then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
 .then(data=>{
  const layer=L.geoJSON(data,{style:()=>({color:'#7186a5',weight:1.1,fillColor:'#8995a5',fillOpacity:.76}),onEachFeature:(f,l)=>{
-  const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);l.bindTooltip(labelNameOfRegion(n),{permanent:true,direction:'center',className:'region-label',opacity:1});l.bindPopup('<b>'+n+'</b><br>Статус: Нет данных');
+  const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);l.bindTooltip(escapeHtml(labelNameOfRegion(n)),{permanent:true,direction:'center',className:'region-label',opacity:1});l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#7186a5',weight:1.1,fillColor:'#8995a5',fillOpacity:.76});});
   l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
