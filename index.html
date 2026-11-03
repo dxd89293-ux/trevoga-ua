@@ -22,6 +22,11 @@ header{display:flex;align-items:center;gap:10px}header img{width:42px;height:42p
 .region b{font-size:13px}.region small{color:var(--muted);font-size:11px}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#657080;color:white;white-space:nowrap}
 button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:white;font-size:14px;font-weight:600}
 .notice{border-left:3px solid #e6b653}small{color:var(--muted);line-height:1.5}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.summary-item{background:#111d2e;border:1px solid var(--line);border-radius:11px;padding:11px;min-width:0}.summary-item strong{display:block;font-size:25px;line-height:1.2}.summary-item span{font-size:11px;color:var(--muted)}.summary-item.red strong{color:#ff6969}.summary-item.yellow strong{color:#f2c94c}.summary-item.green strong{color:#55c88a}.summary-item.gray strong{color:#aab8ca}
+.source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.source-item{border:1px solid var(--line);border-radius:10px;padding:9px;font-size:12px}.source-item b{display:block;margin-bottom:3px}
+.map-tools{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 10px}.map-tools button{background:#42516a}.map-tools button.active{background:#315d9b}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;margin-top:10px}.region-choice{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:8px;font-size:12px}.region-choice input{accent-color:#4f8bd8;width:17px;height:17px}.setting-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.duration{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+@media(max-width:520px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.source-grid{grid-template-columns:1fr}}
 .leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}.leaflet-tooltip-pane{transition:none!important}.leaflet-tooltip.region-label{transition:none!important;background:transparent;border:0;border-radius:0;box-shadow:none;color:#fff;font-size:13px;font-weight:800;padding:0;text-shadow:0 1px 2px rgba(5,12,25,.9),0 0 5px rgba(5,12,25,.75);white-space:nowrap;letter-spacing:.1px}.leaflet-tooltip.region-label:before{display:none}
 @media(max-width:480px){main{padding:9px}#map{min-height:330px;height:58vh}}
 </style>
@@ -29,10 +34,12 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <body><main>
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
 <section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button><button id="enablePush" type="button" style="background:#5a4a91;display:none">Включить push при закрытом сайте</button><button id="disablePush" type="button" style="background:#42516a;display:none">Отключить push</button></div><p id="pushSettings" style="font-size:12px;margin-top:7px">Push при закрытом сайте пока не настроен: нужен отдельный сервер.</p><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
-<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
+<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Сводка по Украине</h2><p id="summaryText">Ожидаем подтверждённые данные по регионам.</p><div class="summary-grid"><div class="summary-item red"><strong id="countRed">—</strong><span>Красный уровень</span></div><div class="summary-item yellow"><strong id="countYellow">—</strong><span>Жёлтый уровень</span></div><div class="summary-item green"><strong id="countClear">—</strong><span>Без тревоги</span></div><div class="summary-item gray"><strong id="countUnknown">—</strong><span>Нет данных</span></div></div><div class="source-grid"><div class="source-item"><b>NEPTUN</b><span id="sourceNeptun">Ожидаем ответ…</span></div><div class="source-item"><b>Tryvoha.online</b><span id="sourceTryvoha">Ожидаем ответ…</span></div></div><p id="lastCheck" style="font-size:11px;margin-top:9px">Последняя проверка: ещё не выполнялась.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div class="map-tools"><button type="button" data-map-view="neighbors" class="active">Соседние страны</button><button type="button" data-map-view="ukraine">Вся Украина</button><button type="button" data-map-view="regions">Только области</button></div><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
 <span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span>
 </div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0">Настройки уведомлений</h2><p>Выбери области, по которым нужны звук, уведомления и push. По умолчанию выбраны все регионы.</p><div class="setting-actions"><button id="selectAllRegions" type="button">Выбрать все</button><button id="clearRegions" type="button" style="background:#42516a">Снять выбор</button></div><div id="regionChoices" class="settings-grid"><small>Список загрузится вместе с картой.</small></div><p id="regionPreferenceStatus" style="font-size:11px;margin-top:8px">Настройки сохраняются на этом устройстве.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Статусы регионов</h2><div id="regions"><p>Загружаются границы областей…</p></div></section>
 <section class="card notice"><b>Важно</b><p>Карта является дополнительным информационным источником, а не системой экстренного оповещения. Не используй её для решения, идти ли в укрытие. Следуй сиренам и официальным указаниям служб. При сбое или устаревании данных показывается «Нет данных», а не «Тревоги нет».</p></section>
 <small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © OpenStreetMap.</small>
@@ -44,6 +51,11 @@ const map=L.map('map',{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:f
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
 const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
 const layers=new Map(), states=new Map();
+const selectedRegions=new Set(JSON.parse(localStorage.getItem('selectedRegions')||'[]'));
+let hasSavedRegionSelection=localStorage.getItem('selectedRegions')!==null;
+let pushSubscription=null;
+const sourceNeptun=document.getElementById('sourceNeptun'),sourceTryvoha=document.getElementById('sourceTryvoha'),lastCheck=document.getElementById('lastCheck');
+const regionChoices=document.getElementById('regionChoices'),regionPreferenceStatus=document.getElementById('regionPreferenceStatus');
 let alertsEnabled=localStorage.getItem('alertsEnabled')==='true';
 let firstRefresh=true,audioContext=null;
 const alertSettings=document.getElementById('alertSettings');
@@ -63,7 +75,7 @@ function beep(pattern){
  }catch(e){}
 }
 function notifyChange(name,s,started){
- if(!alertsEnabled||!s.known)return;
+ if(!alertsEnabled||!s.known||!isRegionSelected(name))return;
  if(navigator.vibrate)navigator.vibrate(started?[300,150,300]:[120,80,120]);
  beep(started?[.32,.32,.32]:[.16,.16]);
  if('Notification'in window&&Notification.permission==='granted'){
@@ -120,7 +132,8 @@ pushButton.addEventListener('click',async()=>{
   const reg=await navigator.serviceWorker.ready;
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeVapidKey(pushPublicKey)});
-  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(sub.toJSON())});
+  pushSubscription=sub;
+  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),regions:[...selectedRegions]})});
   if(!response.ok)throw Error('Сервер не принял подписку.');
   disablePushButton.style.display='inline-block';
   pushSettings.textContent='Push подключён. Сервер сможет присылать уведомления при закрытом сайте, если браузер и телефон разрешают фоновые уведомления.';
@@ -134,7 +147,7 @@ disablePushButton.addEventListener('click',async()=>{
    if(!response.ok)throw Error('Сервер не удалил подписку.');
    await sub.unsubscribe();
   }
-  disablePushButton.style.display='none';
+  disablePushButton.style.display='none';pushSubscription=null;
   pushSettings.textContent='Push отключён на этом устройстве.';
  }catch(error){pushSettings.textContent='Не удалось отключить push: '+(error.message||'ошибка');}
 });
@@ -157,7 +170,47 @@ function labelNameOfRegion(n){
  if(names[slug])return names[slug];
  return String(n).replace(/\\s+(область|обл\.|область)$/i,'').replace(/ська$/i,'ская').replace(/цька$/i,'цкая');
 }
-function timeOf(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
+function timeOf(v){
+ if(v===null||v===undefined||v==='')return 0;
+ if(typeof v==='number'||/^\d+(\.\d+)?$/.test(String(v))){const n=Number(v);return n<1e12?n*1000:n;}
+ const n=Date.parse(v);return Number.isFinite(n)?n:0;
+}
+function getStartTime(items){
+ const keys=['started_at','start_time','created_at','createdAt','timestamp','startTime','since'];
+ for(const item of items||[])for(const key of keys){const n=timeOf(item&&item[key]);if(n>0&&n<=Date.now()+30000)return n;}
+ return null;
+}
+function formatDuration(start){
+ if(!start)return 'Время начала не указано';
+ const mins=Math.max(0,Math.floor((Date.now()-start)/60000)),h=Math.floor(mins/60),m=mins%60;
+ return 'Длительность: '+(h?h+' ч ':'')+m+' мин';
+}
+function isRegionSelected(name){const slug=slugOf(name);return !!slug&&selectedRegions.has(slug);}
+function saveRegionSelection(){
+ localStorage.setItem('selectedRegions',JSON.stringify([...selectedRegions]));
+ regionPreferenceStatus.textContent='Выбрано регионов: '+selectedRegions.size+'. Настройки сохранены на этом устройстве.';
+ syncPushPreferences();
+}
+function syncPushPreferences(){
+ if(!pushApi||!pushSubscription)return;
+ fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:pushSubscription.toJSON(),regions:[...selectedRegions]})})
+ .then(r=>{if(!r.ok)throw Error('HTTP '+r.status);pushSettings.textContent='Push-настройки регионов обновлены.';})
+ .catch(()=>{pushSettings.textContent='Не удалось обновить фильтр push. Возможно, Worker ещё не обновлён.';});
+}
+function renderRegionChoices(features){
+ const names=features.map(f=>({name:nameOf(f.properties),slug:slugOf(nameOf(f.properties))})).filter(x=>x.slug);
+ if(!hasSavedRegionSelection){names.forEach(x=>selectedRegions.add(x.slug));hasSavedRegionSelection=true;saveRegionSelection();}
+ regionChoices.innerHTML='';
+ names.sort((a,b)=>a.name.localeCompare(b.name,'uk')).forEach(item=>{
+  const label=document.createElement('label');label.className='region-choice';
+  const input=document.createElement('input');input.type='checkbox';input.checked=selectedRegions.has(item.slug);
+  input.addEventListener('change',()=>{if(input.checked)selectedRegions.add(item.slug);else selectedRegions.delete(item.slug);saveRegionSelection();});
+  const span=document.createElement('span');span.textContent=item.name;label.append(input,span);regionChoices.append(label);
+ });
+ regionPreferenceStatus.textContent='Выбрано регионов: '+selectedRegions.size+'. Настройки сохраняются на этом устройстве.';
+}
+document.getElementById('selectAllRegions').addEventListener('click',()=>{regionChoices.querySelectorAll('input').forEach(i=>{i.checked=true;});regionChoices.querySelectorAll('label').forEach(l=>{const slug=slugOf(l.querySelector('span').textContent);if(slug)selectedRegions.add(slug);});saveRegionSelection();});
+document.getElementById('clearRegions').addEventListener('click',()=>{selectedRegions.clear();regionChoices.querySelectorAll('input').forEach(i=>{i.checked=false;});saveRegionSelection();});
 function styleOf(s){return {color:s.partial?'#fff':'#46566b',weight:s.partial?2.3:1.3,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.76};}
 function labelOf(s){
  if(!s||!s.known)return 'НЕТ ДАННЫХ';
@@ -170,12 +223,13 @@ function labelOf(s){
 }
 function applyState(name,s){
  const key=norm(name),layer=layers.get(key);if(!layer)return;
+ s.startedAt=getStartTime(s.items||[]);
  const previous=states.get(key);
  if(!firstRefresh&&previous&&previous.known&&s.known&&previous.active!==s.active)notifyChange(name,s,s.active);
  s.color=!s.known?'#8995a5':(!s.active?'#43a66b':(s.level==='yellow'?'#f2c94c':'#e34b4b'));
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
- if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';}
+ if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';const d=el.parentElement.querySelector('.duration');if(d)d.textContent=s.active?formatDuration(s.startedAt):'';}
  const title=String(name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
  layer.bindPopup('<b>'+title+'</b><br>Статус: '+labelOf(s));
 }
@@ -184,8 +238,9 @@ function drawList(features){
  features.slice().sort((x,y)=>nameOf(x.properties).localeCompare(nameOf(y.properties),'uk')).forEach(f=>{
   const n=nameOf(f.properties),key=norm(n),el=document.createElement('div');el.className='region';el.dataset.region=key;
   const title=document.createElement('b');title.textContent=n;
+  const statusWrap=document.createElement('div');statusWrap.style.textAlign='right';
   const pill=document.createElement('span');pill.className='pill';pill.textContent='НЕТ ДАННЫХ';
-  el.append(title,pill);regions.append(el);
+  const duration=document.createElement('small');duration.className='duration';statusWrap.append(pill,duration);el.append(title,statusWrap);regions.append(el);
  });
 }
 async function getJson(url){
@@ -201,8 +256,9 @@ function calculate(n,t){
  const out=[];
  for(const [key,layer] of layers){
   const name=layer.regionName,slug=slugOf(name);
-  const nFull=nO.some(x=>norm(x.name)===norm(name)||norm(x.oblast)===norm(name));
-  const nPart=nR.some(x=>norm(x.oblast)===norm(name));
+  const nFullItems=nO.filter(x=>norm(x.name)===norm(name)||norm(x.oblast)===norm(name));
+  const nPartItems=nR.filter(x=>norm(x.oblast)===norm(name));
+  const nFull=nFullItems.length>0,nPart=nPartItems.length>0;
   const matches=slug?tA.filter(x=>x.slug===slug||x.oblast_slug===slug):[];
   const tFull=matches.some(x=>x.slug===slug&&x.type!=='district');
   const tPart=matches.some(x=>x.type==='district');
@@ -215,21 +271,44 @@ function calculate(n,t){
   if(!level&&active)level='unknown';
   const both=!!n&&tFresh&&statusSupported;
   const known=both||(active&&(!!n||tFresh));
-  out.push([name,{known,active,partial,conflict,level}]);
+  const tItems=matches.filter(x=>x.slug===slug||x.oblast_slug===slug);
+  out.push([name,{known,active,partial,conflict,level,items:[...nFullItems,...nPartItems,...tItems]}]);
  }
  return {out,tFresh};
 }
 async function refresh(){
+ const checkedAt=Date.now();
  const r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);
  const n=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
  const t=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)&&timeOf(r[1].value.updated_at)>0?r[1].value:null;
  const data=calculate(n,t);
  data.out.forEach(([name,state])=>applyState(name,state));
  firstRefresh=false;
- if(n&&data.tFresh){connection.textContent='Оба источника отвечают';updated.textContent='Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('uk-UA')+'. Расхождения отображаются отдельно.';}
- else if(n||data.tFresh){connection.textContent='Доступен только один источник';updated.textContent='Активные тревоги показываются, но регионы без подтверждения отмечены серым.';}
- else{connection.textContent='Нет связи с источниками';updated.textContent='Все регионы без подтверждённых данных отмечены серым.';}
+ const vals=data.out.map(x=>x[1]);
+ const red=vals.filter(s=>s.known&&s.active&&s.level==='red').length;
+ const yellow=vals.filter(s=>s.known&&s.active&&s.level==='yellow').length;
+ const activeUnknown=vals.filter(s=>s.known&&s.active&&s.level!=='red'&&s.level!=='yellow').length;
+ const clear=vals.filter(s=>s.known&&!s.active).length;
+ const unknown=vals.length-red-yellow-activeUnknown-clear;
+ document.getElementById('countRed').textContent=red;
+ document.getElementById('countYellow').textContent=yellow;
+ document.getElementById('countClear').textContent=clear;
+ document.getElementById('countUnknown').textContent=unknown;
+ document.getElementById('summaryText').textContent=activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':'Подтверждённые активные тревоги не обнаружены.');
+ connection.textContent=n&&data.tFresh?'Оба источника отвечают':(n||data.tFresh?'Доступен только один источник':'Нет связи с источниками');
+ const sourceTime=value=>{const stamp=timeOf(value);return stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время обновления в ответе не указано';};
+ sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):'Нет ответа';
+ sourceTryvoha.textContent=t?'Ответ получен; '+sourceTime(t.updated_at):'Нет свежего ответа (старше 3 минут или ошибка)';
+ lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
+ updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
 }
+document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventListener('click',()=>{
+ const mode=button.dataset.mapView, b=window.trevogaMapBounds;
+ if(!b)return;
+ document.querySelectorAll('[data-map-view]').forEach(x=>x.classList.toggle('active',x===button));
+ map.fitBounds(mode==='neighbors'?b.neighbors:(mode==='ukraine'?b.ukraine:b.ukraine),{padding:mode==='regions'?[35,35]:[8,8],maxZoom:mode==='regions'?6.2:undefined});
+ if(mode==='regions')map.zoomIn(0.7);
+}));
 fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
 .then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
 .then(data=>{
@@ -239,13 +318,14 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#7186a5',weight:1.1,fillColor:'#8995a5',fillOpacity:.76});});
  }}).addTo(map);
  const ukraineBounds=layer.getBounds();
+ window.trevogaMapBounds={ukraine:ukraineBounds,neighbors:L.latLngBounds([ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],[ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8])};
  const regionalBounds=L.latLngBounds(
   [ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],
   [ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8]
  );
- map.fitBounds(regionalBounds,{padding:[8,8]});drawList(data.features||[]);
+ map.fitBounds(regionalBounds,{padding:[8,8]});drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
- refresh();setInterval(refresh,60000);
+ refresh();setInterval(refresh,60000);setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
 .catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь интернет.</p>';connection.textContent='Карта недоступна';updated.textContent='Нет данных.';});
 </script></body></html>
