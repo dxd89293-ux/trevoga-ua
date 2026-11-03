@@ -1,0 +1,11 @@
+{
+  "name": "Тревога UA — личная карта",
+  "short_name": "Тревога UA",
+  "lang": "ru",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#101827",
+  "theme_color": "#101827",
+  "description": "Личная версия для Киева и Киевской области",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

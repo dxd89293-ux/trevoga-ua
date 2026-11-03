@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Личная карта воздушных тревог Киева и Киевской области">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>Тревога UA</title>
+  <style>
+    :root{color-scheme:dark;--bg:#101827;--panel:#1b283b;--line:#314158;--muted:#aab8ca;--text:#f4f7fb}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px system-ui, sans-serif}
+    main{max-width:620px;margin:auto;padding:18px;display:grid;gap:14px}
+    header{display:flex;align-items:center;gap:12px}header img{width:48px;height:48px}
+    h1{font-size:23px;margin:0}p{margin:4px 0;color:var(--muted)}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+    .status{font-size:20px;font-weight:700;margin:8px 0}
+    .tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:5px 10px;color:var(--muted);font-size:12px}
+    .region{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid var(--line)}
+    .region:first-of-type{border-top:0}.value{color:#f6c86b;font-size:13px}
+    button{width:100%;border:0;border-radius:12px;padding:13px;background:#315d9b;color:white;font-size:16px;font-weight:600}
+    button:disabled{opacity:.55}small{color:var(--muted);line-height:1.5}
+    .notice{border-left:3px solid #e6b653;padding-left:12px}
+  </style>
+</head>
+<body>
+<main>
+  <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Личная версия · Киев и область</p></div><span class="tag" style="margin-left:auto">ТЕСТ</span></header>
+  <section class="card">
+    <div class="tag">Состояние подключения</div>
+    <div class="status" id="overall">Нет подключения к источникам</div>
+    <p id="updated">Реальные данные ещё не подключены</p>
+  </section>
+  <section class="card">
+    <h2 style="font-size:18px;margin:0 0 8px">Мои регионы</h2>
+    <div class="region"><div><b>Киев</b><p>Статус ожидает подключения</p></div><span class="value">НЕТ ДАННЫХ</span></div>
+    <div class="region"><div><b>Киевская область</b><p>Статус ожидает подключения</p></div><span class="value">НЕТ ДАННЫХ</span></div>
+  </section>
+  <section class="card">
+    <h2 style="font-size:18px;margin:0 0 8px">Уведомления</h2>
+    <p style="margin-bottom:12px">Разрешение можно запросить после установки. Пока сервер и проверенные источники не подключены, уведомления о тревоге не отправляются.</p>
+    <button id="notify">Разрешить уведомления</button>
+    <p id="notifyResult" aria-live="polite"></p>
+  </section>
+  <section class="card notice">
+    <b>Важно</b>
+    <p>Это стартовая оболочка, а не действующая система оповещения. Не используй её для решения, идти ли в укрытие. Следуй сигналам сирен, официальным оповещениям и указаниям служб.</p>
+  </section>
+  <small>Версия 0.1 · Нет GPS-слежения · Данные не передаются с телефона</small>
+</main>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+  const btn=document.getElementById('notify');
+  btn.addEventListener('click', async()=>{
+    const out=document.getElementById('notifyResult');
+    if(!('Notification' in window)){out.textContent='Этот браузер не поддерживает уведомления.';return;}
+    try{
+      const permission=await Notification.requestPermission();
+      out.textContent=permission==='granted'?'Разрешение получено. Реальные оповещения появятся только после подключения сервера.': 'Разрешение не выдано.';
+    }catch(e){out.textContent='Не удалось запросить разрешение.';}
+  });
+</script>
+</body>
+</html>
