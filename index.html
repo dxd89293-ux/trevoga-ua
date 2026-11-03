@@ -49,7 +49,8 @@ let firstRefresh=true,audioContext=null;
 const alertSettings=document.getElementById('alertSettings');
 const enableAlertsButton=document.getElementById('enableAlerts');
 function updateAlertLabel(){
- alertSettings.textContent=alertsEnabled?'Звук и оповещения включены. Уведомления браузера: '+(Notification.permission==='granted'?'разрешены':Notification.permission==='denied'?'запрещены':'не запрошены')+'.':'Оповещения выключены. Нажми «Включить звук и уведомления».';
+ const permission=('Notification'in window)?Notification.permission:'не поддерживаются';
+ alertSettings.textContent=alertsEnabled?'Звук и оповещения включены. Уведомления браузера: '+(permission==='granted'?'разрешены':permission==='denied'?'запрещены':permission==='default'?'не запрошены':permission)+'.':'Оповещения выключены. Нажми «Включить звук и уведомления».';
  enableAlertsButton.textContent=alertsEnabled?'Оповещения включены':'Включить звук и уведомления';
 }
 function beep(pattern){
