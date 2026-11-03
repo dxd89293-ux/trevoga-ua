@@ -452,7 +452,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   try{if(typeof l.getCenter==='function'){const c=l.getCenter();if(c&&Number.isFinite(c.lat)&&Number.isFinite(c.lng))labelCenter=c;}}catch(e){}
   const labelWidth=regionTitle.length>16?120:(regionTitle.length>12?112:100);
   const labelFont=regionTitle.length>16?9:(regionTitle.length>12?10:11);
-  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text" style="width: + `${labelWidth}` + px;max-width: + `${labelWidth}` + px;font-size: + `${labelFont}` + px">'+escapeHtml(regionTitle)+'</span>',iconSize:[labelWidth,30],iconAnchor:[labelWidth/2,15]});
+  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text" style="width:'+labelWidth+'px;max-width:'+labelWidth+'px;font-size:'+labelFont+'px">'+escapeHtml(regionTitle)+'</span>',iconSize:[labelWidth,30],iconAnchor:[labelWidth/2,15]});
   L.marker(labelCenter,{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#c4d2e4',weight:1.55,opacity:.98,fillColor:'#344c70',fillOpacity:.92});});
