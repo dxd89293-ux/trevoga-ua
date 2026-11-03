@@ -294,6 +294,21 @@ const regionLabelPane=map.createPane('regionLabelsPane');
 regionLabelPane.style.zIndex='655';
 regionLabelPane.style.pointerEvents='none';
 const regionLabelLayer=L.layerGroup().addTo(map);
+const regionLabelMarkers=[];
+const regionLabelPriority=['місто київ','київська область','чернігівська область','черкаська область','полтавська область','житомирська область','сумська область'];
+function updateRegionLabelCollisions(){
+ const placed=[];
+ const sorted=regionLabelMarkers.slice().sort((a,b)=>a.priority-b.priority);
+ sorted.forEach(item=>{
+  const p=map.latLngToContainerPoint(item.marker.getLatLng());
+  const box={left:p.x-62,right:p.x+62,top:p.y-9,bottom:p.y+9};
+  const collides=placed.some(q=>box.left<q.right+7&&box.right>q.left-7&&box.top<q.bottom+5&&box.bottom>q.top-5);
+  const visible=!collides&&p.x>-70&&p.x<map.getSize().x+70&&p.y>-30&&p.y<map.getSize().y+30;
+  item.marker.setOpacity(visible?1:0);
+  if(visible)placed.push(box);
+ });
+}
+map.on('zoomend moveend',updateRegionLabelCollisions);
 const cityLabelPane=map.createPane('cityLabelsPane');
 cityLabelPane.style.zIndex='660';
 cityLabelPane.style.pointerEvents='none';
@@ -421,7 +436,10 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
 .then(data=>{
  const layer=L.geoJSON(data,{style:()=>({color:'#713b3b',weight:1.05,fillColor:'#555d65',fillOpacity:.88}),onEachFeature:(f,l)=>{
   const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text">'+escapeHtml(n)+'</span>',iconSize:[124,18],iconAnchor:[62,9]});
-  L.marker(l.getBounds().getCenter(),{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
+  const regionMarker=L.marker(l.getBounds().getCenter(),{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);
+  const labelKey=norm(n);
+  const priorityIndex=regionLabelPriority.indexOf(labelKey);
+  regionLabelMarkers.push({marker:regionMarker,priority:priorityIndex===-1?100:priorityIndex});l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#713b3b',weight:1.05,fillColor:'#555d65',fillOpacity:.88});});
   l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
@@ -432,7 +450,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#d6d9dc',weight:2.5,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
  const ukraineBounds=layer.getBounds();
  window.trevogaMapBounds={ukraine:ukraineBounds};
- map.fitBounds(ukraineBounds,{padding:[12,12]});drawList(data.features||[]);renderRegionChoices(data.features||[]);
+ map.fitBounds(ukraineBounds,{padding:[12,12]});updateRegionLabelCollisions();drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
  refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
