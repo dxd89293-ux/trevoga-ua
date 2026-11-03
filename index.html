@@ -27,7 +27,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 .map-tools{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 10px}.map-tools button{background:#42516a}.map-tools button.active{background:#315d9b}
 .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;margin-top:10px}.region-choice{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:8px;font-size:12px}.region-choice input{accent-color:#4f8bd8;width:17px;height:17px}.setting-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.duration{display:block;color:var(--muted);font-size:10px;margin-top:4px}.history-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}.history-stat{background:#111d2e;border:1px solid var(--line);border-radius:10px;padding:10px}.history-stat strong{display:block;font-size:22px}.history-stat span{font-size:11px;color:var(--muted)}#historyList{display:grid;gap:7px;margin-top:10px}.history-entry{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:9px;font-size:12px}.history-entry b{display:block}.history-entry small{display:block}.history-entry .event-type{font-weight:700;white-space:nowrap}.history-entry.alert .event-type{color:#ff7777}.history-entry.clear .event-type{color:#55c88a}.history-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 @media(max-width:520px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.source-grid{grid-template-columns:1fr}}
-.leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}.leaflet-tooltip-pane{transition:none!important}.region-label-marker{background:transparent;border:0;pointer-events:none}.region-label-text{display:block;width:124px;text-align:center;white-space:nowrap;overflow:visible;color:#f0eeee;font-size:11px;font-weight:850;line-height:18px;text-shadow:0 1px 2px rgba(0,0,0,.98),0 0 4px rgba(0,0,0,.95);letter-spacing:.15px;text-transform:uppercase;pointer-events:none}.leaflet-tooltip.city-label{background:transparent;border:0;border-radius:0;box-shadow:none;color:#f5f8ff;font-size:12px;font-weight:750;padding:0;text-shadow:0 1px 2px rgba(5,12,25,.95),0 0 5px rgba(5,12,25,.9);white-space:nowrap;letter-spacing:.05px;pointer-events:none}.leaflet-tooltip.city-label:before{display:none}.city-label-marker{background:transparent;border:0;pointer-events:none}.city-label-text{display:block;width:160px;text-align:center;white-space:nowrap;color:#f5f8ff;font-size:12px;font-weight:750;line-height:24px;text-shadow:0 1px 2px rgba(5,12,25,.98),0 0 5px rgba(5,12,25,.95);letter-spacing:.05px;pointer-events:none}
+.leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}.leaflet-tooltip-pane{transition:none!important}.region-label-marker{background:transparent;border:0;pointer-events:none}.region-label-text{display:flex;width:108px;height:30px;max-width:108px;align-items:center;justify-content:center;padding:1px 3px;text-align:center;white-space:normal;overflow:hidden;overflow-wrap:anywhere;word-break:normal;color:#fff;font-size:11px;font-weight:800;line-height:12px;text-shadow:0 1px 3px #06101d,0 0 6px #06101d;letter-spacing:0;pointer-events:none}.leaflet-tooltip.city-label{background:transparent;border:0;border-radius:0;box-shadow:none;color:#f5f8ff;font-size:12px;font-weight:750;padding:0;text-shadow:0 1px 2px rgba(5,12,25,.95),0 0 5px rgba(5,12,25,.9);white-space:nowrap;letter-spacing:.05px;pointer-events:none}.leaflet-tooltip.city-label:before{display:none}.city-label-marker{background:transparent;border:0;pointer-events:none}.city-label-text{display:block;width:160px;text-align:center;white-space:nowrap;color:#f5f8ff;font-size:12px;font-weight:750;line-height:24px;text-shadow:0 1px 2px rgba(5,12,25,.98),0 0 5px rgba(5,12,25,.95);letter-spacing:.05px;pointer-events:none}
 .map-stage{position:relative;border:1px solid #34445a;border-radius:14px;overflow:hidden;background:#0b1422}
 #map{height:min(78vh,760px);min-height:430px;border-radius:0;background:#0b1422}
 .map-overlay{position:absolute;z-index:700;pointer-events:none}
@@ -41,9 +41,9 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 .map-actions button{width:38px;height:38px;padding:0;border:1px solid #52647b;border-radius:10px;background:rgba(12,24,41,.94);font-size:20px;box-shadow:0 3px 12px #0007}
 .map-footer{left:12px;right:12px;bottom:0;transform:translateY(calc(100% + 8px));font-size:10px;color:#b7c4d5}
 .map-tools{display:none}
-.region-label-text{width:130px;color:#fff;font-size:12px;font-weight:800;text-shadow:0 1px 3px #06101d,0 0 6px #06101d;letter-spacing:0;text-transform:none}
+.region-label-text{width:108px;max-width:108px;height:30px;font-size:11px;line-height:12px}
 .city-label-text{color:#fff;font-size:11px;font-weight:750;text-shadow:0 1px 3px #06101d,0 0 6px #06101d}
-@media(max-width:520px){#map{height:68vh;min-height:440px}.map-head{top:8px;left:8px;padding:7px 9px}.map-live{top:8px;right:8px;padding:7px 9px;font-size:10px}.map-legend{left:8px;bottom:8px;padding:8px 9px;font-size:10px}.map-actions{right:8px}.region-label-text{font-size:10px;width:112px}.city-label-text{font-size:10px}}
+@media(max-width:520px){#map{height:68vh;min-height:440px}.map-head{top:8px;left:8px;padding:7px 9px}.map-live{top:8px;right:8px;padding:7px 9px;font-size:10px}.map-legend{left:8px;bottom:8px;padding:8px 9px;font-size:10px}.map-actions{right:8px}.region-label-text{font-size:10px;width:100px;max-width:100px;height:28px;line-height:11px}.city-label-text{font-size:10px}}
 @media(max-width:480px){main{padding:9px}#map{min-height:330px;height:58vh}}
 </style>
 </head>
@@ -313,21 +313,7 @@ const regionLabelPane=map.createPane('regionLabelsPane');
 regionLabelPane.style.zIndex='655';
 regionLabelPane.style.pointerEvents='none';
 const regionLabelLayer=L.layerGroup().addTo(map);
-const regionLabelMarkers=[];
-const regionLabelPriority=['місто київ','київська область','чернігівська область','черкаська область','полтавська область','житомирська область','сумська область'];
-function updateRegionLabelCollisions(){
- const placed=[];
- const sorted=regionLabelMarkers.slice().sort((a,b)=>a.priority-b.priority);
- sorted.forEach(item=>{
-  const p=map.latLngToContainerPoint(item.marker.getLatLng());
-  const box={left:p.x-62,right:p.x+62,top:p.y-9,bottom:p.y+9};
-  const collides=placed.some(q=>box.left<q.right+7&&box.right>q.left-7&&box.top<q.bottom+5&&box.bottom>q.top-5);
-  const visible=!collides&&p.x>-70&&p.x<map.getSize().x+70&&p.y>-30&&p.y<map.getSize().y+30;
-  item.marker.setOpacity(visible?1:0);
-  if(visible)placed.push(box);
- });
-}
-map.on('zoomend moveend',updateRegionLabelCollisions);
+
 const cityLabelPane=map.createPane('cityLabelsPane');
 cityLabelPane.style.zIndex='660';
 cityLabelPane.style.pointerEvents='none';
@@ -457,13 +443,12 @@ document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventList
 fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
 .then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
 .then(data=>{
- const layer=L.geoJSON(data,{style:()=>({color:'#9fb0c8',weight:1.05,fillColor:'#344c70',fillOpacity:.92}),onEachFeature:(f,l)=>{
+ const layer=L.geoJSON(data,{style:()=>({color:'#c4d2e4',weight:1.55,opacity:.98,fillColor:'#344c70',fillOpacity:.92}),onEachFeature:(f,l)=>{
   const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);const regionTitle=labelNameOfRegion(n);
-  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text">'+escapeHtml(regionTitle)+'</span>',iconSize:[130,18],iconAnchor:[65,9]});
-  const regionMarker=L.marker(l.getBounds().getCenter(),{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);
-  const labelKey=norm(n);
-  const priorityIndex=regionLabelPriority.indexOf(labelKey);
-  regionLabelMarkers.push({marker:regionMarker,priority:priorityIndex===-1?100:priorityIndex});l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
+  const labelBounds=l.getBounds();
+  const labelCenter=labelBounds.getCenter();
+  const regionIcon=L.divIcon({className:'region-label-marker',html:'<span class="region-label-text">'+escapeHtml(regionTitle)+'</span>',iconSize:[108,30],iconAnchor:[54,15]});
+  L.marker(labelCenter,{icon:regionIcon,pane:'regionLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(regionLabelLayer);l.bindPopup('<b>'+escapeHtml(n)+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#713b3b',weight:1.05,fillColor:'#555d65',fillOpacity:.88});});
   l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
@@ -471,10 +456,10 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  // Внешний контур Украины поверх тёмного фона в стиле карты-образца.
  L.geoJSON(data,{style:()=>({color:'#d4deeb',weight:2.1,opacity:.98,fillOpacity:0}),interactive:false}).addTo(map);
  // Отдельно подчёркиваем административную границу города Киева: она отделяет Киев от Киевской области.
- L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#ffffff',weight:2.8,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
+ L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#ffffff',weight:4,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
  const ukraineBounds=layer.getBounds();
  window.trevogaMapBounds={ukraine:ukraineBounds};
- map.fitBounds(ukraineBounds,{padding:[12,12]});updateRegionLabelCollisions();drawList(data.features||[]);renderRegionChoices(data.features||[]);
+ map.fitBounds(ukraineBounds,{padding:[12,12]});drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
  refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
