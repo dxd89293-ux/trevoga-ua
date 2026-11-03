@@ -103,7 +103,7 @@ function calculate(n,t){
   const tFull=matches.some(x=>x.slug===slug&&x.type!=='district');
   const tPart=matches.some(x=>x.type==='district');
   const nActive=nFull||nPart,tActive=matches.length>0,active=nActive||tActive;
-  const conflict=nActive!==tActive,partial=(nPart&&!nFull)||(tPart&&!tFull);
+  const conflict=nActive!==tActive,partial=(nPart||tPart)&&!(nFull||tFull);
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&nActive)level='unknown';
   const both=!!n&&tFresh&&!!slug;
