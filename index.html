@@ -119,7 +119,7 @@ if(pushApi){
   if(!data.publicKey)throw Error('Missing VAPID public key');
   pushPublicKey=data.publicKey;pushButton.style.display='inline-block';
   pushSettings.textContent='Сервер push подключён. Нажми кнопку, чтобы разрешить уведомления при закрытом сайте.';
-  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub)disablePushButton.style.display='inline-block';}catch(e){}
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub){pushSubscription=sub;disablePushButton.style.display='inline-block';syncPushPreferences();}}catch(e){}
  }).catch(()=>{pushSettings.textContent='Push-сервер указан, но пока не отвечает или не настроен.';});
 }
 pushButton.addEventListener('click',async()=>{
@@ -198,7 +198,7 @@ function syncPushPreferences(){
  .catch(()=>{pushSettings.textContent='Не удалось обновить фильтр push. Возможно, Worker ещё не обновлён.';});
 }
 function renderRegionChoices(features){
- const names=features.map(f=>({name:nameOf(f.properties),slug:slugOf(nameOf(f.properties))})).filter(x=>x.slug);
+ const names=features.map(f=>({name:nameOf(f.properties),slug:slugOf(nameOf(f.properties))})).filter(x=>x.slug&&x.slug!=='crimea'&&x.slug!=='sevastopol');
  if(!hasSavedRegionSelection){names.forEach(x=>selectedRegions.add(x.slug));hasSavedRegionSelection=true;saveRegionSelection();}
  regionChoices.innerHTML='';
  names.sort((a,b)=>a.name.localeCompare(b.name,'uk')).forEach(item=>{
