@@ -234,9 +234,8 @@ function nameOf(p){return p['name:uk']||p['name:ru']||p.name||'Регіон Ук
 function slugOf(n){return slugMap[norm(n)]||null;}
 function labelNameOfRegion(n){
  const slug=slugOf(n);
- const names={vinnytska:'Винница',volynska:'Луцк',dnipropetrovska:'Днепр',donetska:'Донецк',zhytomyrska:'Житомир',zakarpatska:'Ужгород',zaporizka:'Запорожье','ivano-frankivska':'Ивано-Франковск',kyivska:'Киевская',kirovohradska:'Кропивницкий',luhanska:'Луганск',lvivska:'Львов',mykolaivska:'Николаев',odeska:'Одесса',poltavska:'Полтава',rivnenska:'Ровно',sumska:'Сумы',ternopilska:'Тернополь',kharkivska:'Харьков',khersonska:'Херсон',khmelnytska:'Хмельницкий',cherkaska:'Черкассы',chernivetska:'Черновцы',chernihivska:'Чернигов',kyiv:'Киев',crimea:'Симферополь',sevastopol:'Севастополь'};
- if(names[slug])return names[slug];
- return String(n).replace(/\\s+(область|обл\.|область)$/i,'').replace(/ська$/i,'ская').replace(/цька$/i,'цкая');
+ const names={vinnytska:'Вінниця',volynska:'Волинь',dnipropetrovska:'Дніпро',donetska:'Донецьк',zhytomyrska:'Житомир',zakarpatska:'Закарпаття',zaporizka:'Запоріжжя','ivano-frankivska':'Івано-Франківськ',kyivska:'Київська область',kirovohradska:'Кіровоград',luhanska:'Луганськ',lvivska:'Львів',mykolaivska:'Миколаїв',odeska:'Одеса',poltavska:'Полтава',rivnenska:'Рівне',sumska:'Сумська область',ternopilska:'Тернопіль',kharkivska:'Харків',khersonska:'Херсон',khmelnytska:'Хмельницький',cherkaska:'Черкаси',chernivetska:'Чернівці',chernihivska:'Чернігів',kyiv:'Київ',crimea:'АР Крим',sevastopol:'Севастополь'};
+ return names[slug]||String(n);
 }
 function timeOf(v){
  if(v===null||v===undefined||v==='')return 0;
