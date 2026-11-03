@@ -35,7 +35,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
 <section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button><button id="enablePush" type="button" style="background:#5a4a91;display:none">Включить push при закрытом сайте</button><button id="disablePush" type="button" style="background:#42516a;display:none">Отключить push</button></div><p id="pushSettings" style="font-size:12px;margin-top:7px">Push при закрытом сайте пока не настроен: нужен отдельный сервер.</p><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Сводка по Украине</h2><p id="summaryText">Ожидаем подтверждённые данные по регионам.</p><div class="summary-grid"><div class="summary-item red"><strong id="countRed">—</strong><span>Красный уровень</span></div><div class="summary-item yellow"><strong id="countYellow">—</strong><span>Жёлтый уровень</span></div><div class="summary-item green"><strong id="countClear">—</strong><span>Подтверждено без тревоги</span></div><div class="summary-item gray"><strong id="countUnknown">—</strong><span>Нет данных / расхождение</span></div></div><div class="source-grid"><div class="source-item"><b>NEPTUN</b><span id="sourceNeptun">Ожидаем ответ…</span></div><div class="source-item"><b>Tryvoha.online</b><span id="sourceTryvoha">Ожидаем ответ…</span></div></div><p id="lastCheck" style="font-size:11px;margin-top:9px">Последняя проверка: ещё не выполнялась.</p></section>
-<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div class="map-tools"><button type="button" data-map-view="neighbors" class="active">Соседние страны</button><button type="button" data-map-view="ukraine">Вся Украина</button><button type="button" data-map-view="regions">Области крупно</button></div><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
+<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div class="map-tools"><button type="button" data-map-view="ukraine" class="active">Вся Украина</button><button type="button" data-map-view="regions">Области крупно</button></div><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
 <span><i class="dot" style="background:#a5221d;border-color:#c16b66"></i> Красный уровень / тревога</span><span><i class="dot" style="background:#a8791d;border-color:#d1ad62"></i> Жёлтый уровень</span><span><i class="dot" style="background:#285b43;border-color:#6b9a7e"></i> Оба источника не показывают тревогу</span><span><i class="dot" style="background:#555d65;border-color:#9299a0"></i> Нет данных</span><span><i class="dot" style="background:#a87525;border-color:#d0a45c"></i> Расхождение источников</span>
 </div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
@@ -402,7 +402,7 @@ async function refresh(){
  updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(timeOf(t.updated_at||t.updatedAt||t.timestamp)).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
  refreshInProgress=false;
 }
-let activeMapMode='neighbors';
+let activeMapMode='ukraine';
 document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventListener('click',()=>{
  const mode=button.dataset.mapView, b=window.trevogaMapBounds;
  activeMapMode=mode;
@@ -410,7 +410,7 @@ document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventList
  if(map.hasLayer(baseTiles))map.removeLayer(baseTiles);
  document.querySelectorAll('[data-map-view]').forEach(x=>x.classList.toggle('active',x===button));
  if(mode==='regions'){map.fitBounds(b.ukraine,{padding:[12,12],maxZoom:6});updated.textContent='Режим областей: нажми на нужную область, чтобы увеличить её.';}
- else map.fitBounds(mode==='neighbors'?b.neighbors:b.ukraine,{padding:[8,8]});
+ else map.fitBounds(b.ukraine,{padding:[8,8]});
 }));
 fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
 .then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
@@ -426,12 +426,8 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  // Отдельно подчёркиваем административную границу города Киева: она отделяет Киев от Киевской области.
  L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#d6d9dc',weight:2.5,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
  const ukraineBounds=layer.getBounds();
- window.trevogaMapBounds={ukraine:ukraineBounds,neighbors:L.latLngBounds([ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],[ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8])};
- const regionalBounds=L.latLngBounds(
-  [ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],
-  [ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8]
- );
- map.fitBounds(regionalBounds,{padding:[8,8]});drawList(data.features||[]);renderRegionChoices(data.features||[]);
+ window.trevogaMapBounds={ukraine:ukraineBounds};
+ map.fitBounds(ukraineBounds,{padding:[12,12]});drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
  refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
