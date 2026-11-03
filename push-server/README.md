@@ -13,7 +13,7 @@ This folder contains the separate Cloudflare Worker required for real Web Push w
 
 ## One-time setup
 
-1. Create a Cloudflare account and a KV namespace named for example `TREVOGA_PUSH_SUBSCRIPTIONS`.
+1. Create a Cloudflare account, then create a KV namespace named for example `TREVOGA_PUSH_SUBSCRIPTIONS` with `npx wrangler kv namespace create TREVOGA_PUSH_SUBSCRIPTIONS` (run from this folder). Copy the returned namespace ID into `wrangler.toml`.
 2. Replace `REPLACE_WITH_CLOUDFLARE_KV_NAMESPACE_ID` in `wrangler.toml` with that namespace ID.
 3. In this folder run `npm install`.
 4. Run `npm run generateKeys` once. Save the three output values privately. Never commit the private key.
