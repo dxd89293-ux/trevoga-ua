@@ -133,7 +133,7 @@ async function checkAndNotify(env) {
   // Persist a fresh, fully sourced snapshot before sending. No push is sent on first run.
   await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
   for (const [slug, active] of Object.entries(states)) {
-    if (typeof previous[slug] !== "boolean" || previous[slug] === active) continue;
+    if (typeof active !== "boolean" || typeof previous[slug] !== "boolean" || previous[slug] === active) continue;
     const name = REGIONS[slug];
     await sendToAll(env, {
       title: active ? "Повітряна тривога" : "Відбій повітряної тривоги",
