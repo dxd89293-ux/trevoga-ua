@@ -28,7 +28,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 </head>
 <body><main>
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
-<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button></div><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
+<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button></div><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
 <span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span>
@@ -78,6 +78,18 @@ enableAlertsButton.addEventListener('click',async()=>{
 });
 document.getElementById('testSound').addEventListener('click',()=>{if(!alertsEnabled){alertSettings.textContent='Сначала включи оповещения.';return;}beep([.12,.12,.12]);if(navigator.vibrate)navigator.vibrate(100);});
 updateAlertLabel();
+let deferredInstallPrompt=null;
+const installButton=document.getElementById('installApp');
+window.addEventListener('beforeinstallprompt',event=>{
+ event.preventDefault();deferredInstallPrompt=event;installButton.style.display='inline-block';
+});
+installButton.addEventListener('click',async()=>{
+ if(!deferredInstallPrompt)return;
+ deferredInstallPrompt.prompt();
+ try{await deferredInstallPrompt.userChoice;}catch(e){}
+ deferredInstallPrompt=null;installButton.style.display='none';
+});
+window.addEventListener('appinstalled',()=>{installButton.style.display='none';deferredInstallPrompt=null;});
 const slugMap={
 'вінницька область':'vinnytska','волинська область':'volynska','дніпропетровська область':'dnipropetrovska','донецька область':'donetska',
 'житомирська область':'zhytomyrska','закарпатська область':'zakarpatska','запорізька область':'zaporizka','івано-франківська область':'ivano-frankivska',
@@ -85,14 +97,14 @@ const slugMap={
 'миколаївська область':'mykolaivska','одеська область':'odeska','полтавська область':'poltavska','рівненська область':'rivnenska',
 'сумська область':'sumska','тернопільська область':'ternopilska','харківська область':'kharkivska','херсонська область':'khersonska',
 'хмельницька область':'khmelnytska','черкаська область':'cherkaska','чернівецька область':'chernivetska','чернігівська область':'chernihivska',
-'місто київ':'kyiv','київ':'kyiv',
+'місто київ':'kyiv','київ':'kyiv','автономна республіка крим':'crimea','республіка крим':'crimea','місто севастополь':'sevastopol','севастополь':'sevastopol',
 };
 function norm(v){return String(v||'').toLocaleLowerCase('uk').replace(/[’'`]/g,'').replace(/\s+/g,' ').trim();}
 function nameOf(p){return p['name:uk']||p['name:ru']||p.name||'Регіон України';}
 function slugOf(n){return slugMap[norm(n)]||null;}
 function labelNameOfRegion(n){
  const slug=slugOf(n);
- const names={vinnytska:'Винница',volynska:'Луцк',dnipropetrovska:'Днепр',donetska:'Донецк',zhytomyrska:'Житомир',zakarpatska:'Ужгород',zaporizka:'Запорожье','ivano-frankivska':'Ивано-Франковск',kyivska:'Киевская',kirovohradska:'Кропивницкий',luhanska:'Луганск',lvivska:'Львов',mykolaivska:'Николаев',odeska:'Одесса',poltavska:'Полтава',rivnenska:'Ровно',sumska:'Сумы',ternopilska:'Тернополь',kharkivska:'Харьков',khersonska:'Херсон',khmelnytska:'Хмельницкий',cherkaska:'Черкассы',chernivetska:'Черновцы',chernihivska:'Чернигов',kyiv:'Киев'};
+ const names={vinnytska:'Винница',volynska:'Луцк',dnipropetrovska:'Днепр',donetska:'Донецк',zhytomyrska:'Житомир',zakarpatska:'Ужгород',zaporizka:'Запорожье','ivano-frankivska':'Ивано-Франковск',kyivska:'Киевская',kirovohradska:'Кропивницкий',luhanska:'Луганск',lvivska:'Львов',mykolaivska:'Николаев',odeska:'Одесса',poltavska:'Полтава',rivnenska:'Ровно',sumska:'Сумы',ternopilska:'Тернополь',kharkivska:'Харьков',khersonska:'Херсон',khmelnytska:'Хмельницкий',cherkaska:'Черкассы',chernivetska:'Черновцы',chernihivska:'Чернигов',kyiv:'Киев',crimea:'Симферополь',sevastopol:'Севастополь'};
  if(names[slug])return names[slug];
  return String(n).replace(/\\s+(область|обл\.|область)$/i,'').replace(/ська$/i,'ская').replace(/цька$/i,'цкая');
 }
@@ -175,7 +187,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#7186a5',weight:1.1,fillColor:'#8995a5',fillOpacity:.76});});
  }}).addTo(map);
- map.fitBounds(layer.getBounds(),{padding:[8,8]});drawList(data.features||[]);
+ map.fitBounds(layer.getBounds(),{padding:[8,8]});drawList(data.features||[]);\n if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
  refresh();setInterval(refresh,60000);
 })
 .catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь интернет.</p>';connection.textContent='Карта недоступна';updated.textContent='Нет данных.';});
