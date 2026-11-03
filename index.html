@@ -21,7 +21,7 @@ header{display:flex;align-items:center;gap:10px}header img{width:42px;height:42p
 .region{border:1px solid var(--line);border-radius:10px;padding:9px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
 .region b{font-size:13px}.region small{color:var(--muted);font-size:11px}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#657080;color:white;white-space:nowrap}
 button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:white;font-size:14px;font-weight:600}
-.notice{border-left:3px solid #e6b653}small{color:var(--muted);line-height:1.5}
+.notice{border-left:3px solid #8995a5}small{color:var(--muted);line-height:1.5}
 .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.summary-item{background:#111d2e;border:1px solid var(--line);border-radius:11px;padding:11px;min-width:0}.summary-item strong{display:block;font-size:25px;line-height:1.2}.summary-item span{font-size:11px;color:var(--muted)}.summary-item.red strong{color:#ff6969}.summary-item.yellow strong{color:#f2c94c}.summary-item.green strong{color:#55c88a}.summary-item.gray strong{color:#aab8ca}
 .source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.source-item{border:1px solid var(--line);border-radius:10px;padding:9px;font-size:12px}.source-item b{display:block;margin-bottom:3px}
 .map-tools{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 10px}.map-tools button{background:#42516a}.map-tools button.active{background:#315d9b}
@@ -54,10 +54,10 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div class="map-tools"><button type="button" data-map-view="ukraine" class="active">Вся Украина</button><button type="button" data-map-view="regions">Области крупно</button></div><div class="map-stage"><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="map-overlay map-head"><span class="shield">🇺🇦</span><span><b>Тревога UA</b><small>Карта повітряних тривог</small></span></div>
 <div class="map-overlay map-live"><i class="live-dot"></i><span id="mapLiveText">Ожидаем обновление</span><span aria-hidden="true">↻</span></div>
-<div class="map-overlay map-legend"><span><i style="background:#ed343b"></i>Повітряна тривога</span><span><i style="background:#f07832"></i>Загроза</span><span><i style="background:#e8bd35"></i>Ракетна небезпека</span><span><i style="background:#344c70"></i>Спокійно / нет данных</span></div>
+<div class="map-overlay map-legend"><span><i style="background:#ed343b"></i>Красный уровень</span><span><i style="background:#e8bd35"></i>Жёлтый уровень</span><span><i style="background:#43a66b"></i>Подтверждено без тревоги</span><span><i style="background:#8995a5"></i>Нет данных / расхождение</span></div>
 <div class="map-overlay map-actions"><button type="button" id="mapZoomIn" aria-label="Увеличить">+</button><button type="button" id="mapZoomOut" aria-label="Уменьшить">−</button><button type="button" id="mapLocate" aria-label="Показать всю Украину">◎</button></div></div>
 <div class="legend">
-<span><i class="dot" style="background:#a5221d;border-color:#c16b66"></i> Красный уровень / тревога</span><span><i class="dot" style="background:#a8791d;border-color:#d1ad62"></i> Жёлтый уровень</span><span><i class="dot" style="background:#285b43;border-color:#6b9a7e"></i> Оба источника не показывают тревогу</span><span><i class="dot" style="background:#555d65;border-color:#9299a0"></i> Нет данных</span><span><i class="dot" style="background:#a87525;border-color:#d0a45c"></i> Расхождение источников</span>
+<span><i class="dot" style="background:#a5221d;border-color:#c16b66"></i> Красный уровень</span><span><i class="dot" style="background:#a8791d;border-color:#d1ad62"></i> Жёлтый уровень</span><span><i class="dot" style="background:#285b43;border-color:#6b9a7e"></i> Подтверждено без тревоги</span><span><i class="dot" style="background:#555d65;border-color:#9299a0"></i> Нет данных / расхождение</span>
 </div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Настройки уведомлений</h2><p>Выбери способ оповещения и области, по которым нужны звук, уведомления и push. По умолчанию выбраны все регионы.</p>
 <div class="setting-actions"><label class="region-choice"><input id="soundToggle" type="checkbox" checked> Звук</label><label class="region-choice"><input id="vibrationToggle" type="checkbox" checked> Вибрация</label><label class="region-choice"><input id="browserToggle" type="checkbox" checked> Уведомления браузера</label></div><div class="setting-actions"><button id="selectAllRegions" type="button">Выбрать все</button><button id="clearRegions" type="button" style="background:#42516a">Снять выбор</button></div><div id="regionChoices" class="settings-grid"><small>Список загрузится вместе с картой.</small></div><p id="regionPreferenceStatus" style="font-size:11px;margin-top:8px">Настройки сохраняются на этом устройстве.</p></section>
@@ -330,7 +330,7 @@ ukraineCityLabels.forEach(city=>{
  L.marker([city.lat,city.lng],{icon,pane:'cityLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(cityLabelLayer);
 });
 
-function styleOf(s){return {color:s.partial?'#f4d18a':'#9fb0c8',weight:s.partial?1.8:1.05,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.92};}
+function styleOf(s){return {color:s.partial?'#aebbc9':'#9fb0c8',weight:s.partial?1.8:1.05,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.92};}
 function labelOf(s){
  if(s&&s.conflict)return 'РАСХОЖДЕНИЕ ИСТОЧНИКОВ';
  if(!s||!s.known)return 'НЕТ ДАННЫХ';
@@ -346,7 +346,7 @@ function applyState(name,s){
  s.startedAt=getStartTime(s.items||[]);
  const previous=states.get(key);
  if(!firstRefresh&&previous&&previous.known&&s.known&&previous.active!==s.active){recordLocalEvent(name,s.active);notifyChange(name,s,s.active);}
- s.color=s.conflict?'#f07832':(!s.known?'#344c70':(!s.active?'#344c70':(s.level==='yellow'?'#e8bd35':'#ed343b')));
+ s.color=s.conflict?'#8995a5':(!s.known?'#344c70':(!s.active?'#43a66b':(s.level==='yellow'?'#e8bd35':'#ed343b')));
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
  if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';const d=el.parentElement.querySelector('.duration');if(d)d.textContent=s.active?formatDuration(s.startedAt):'';}
