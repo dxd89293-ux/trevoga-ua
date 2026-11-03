@@ -238,7 +238,12 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#7186a5',weight:1.1,fillColor:'#8995a5',fillOpacity:.76});});
  }}).addTo(map);
- map.fitBounds(layer.getBounds(),{padding:[8,8]});drawList(data.features||[]);
+ const ukraineBounds=layer.getBounds();
+ const regionalBounds=L.latLngBounds(
+  [ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],
+  [ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8]
+ );
+ map.fitBounds(regionalBounds,{padding:[8,8]});drawList(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
  refresh();setInterval(refresh,60000);
 })
