@@ -52,7 +52,8 @@ const map=L.map('map',{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:f
 const baseTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
 const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
 const layers=new Map(), states=new Map();
-const selectedRegions=new Set(JSON.parse(localStorage.getItem('selectedRegions')||'[]'));
+let savedRegions=[];try{const parsed=JSON.parse(localStorage.getItem('selectedRegions')||'[]');if(Array.isArray(parsed))savedRegions=parsed.filter(x=>typeof x==='string');}catch(e){}
+const selectedRegions=new Set(savedRegions);
 let hasSavedRegionSelection=localStorage.getItem('selectedRegions')!==null;
 let pushSubscription=null;
 const sourceNeptun=document.getElementById('sourceNeptun'),sourceTryvoha=document.getElementById('sourceTryvoha'),lastCheck=document.getElementById('lastCheck');
@@ -228,6 +229,7 @@ function labelOf(s){
  if(s.level==='red')return 'КРАСНЫЙ УРОВЕНЬ'+part;
  return 'ТРЕВОГА · УРОВЕНЬ НЕ УТОЧНЁН'+part;
 }
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function applyState(name,s){
  const key=norm(name),layer=layers.get(key);if(!layer)return;
  s.startedAt=getStartTime(s.items||[]);
@@ -237,8 +239,8 @@ function applyState(name,s){
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
  if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';const d=el.parentElement.querySelector('.duration');if(d)d.textContent=s.active?formatDuration(s.startedAt):'';}
- const title=String(name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
- layer.bindPopup('<b>'+title+'</b><br>Статус: '+labelOf(s));
+ const title=escapeHtml(name);
+ layer.bindPopup('<b>'+title+'</b><br>Статус: '+escapeHtml(labelOf(s)));
 }
 function drawList(features){
  regions.innerHTML='';
@@ -277,15 +279,19 @@ function calculate(n,t){
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&active)level='unknown';
   const both=!!n&&tFresh&&statusSupported;
-  const known=both||(active&&(!!n||tFresh));
+  const known=statusSupported&&(both||(active&&(!!n||tFresh)));
   const tItems=matches.filter(x=>x.slug===slug||x.oblast_slug===slug);
   out.push([name,{known,active,partial,conflict,level,items:[...nFullItems,...nPartItems,...tItems]}]);
  }
  return {out,tFresh};
 }
+let refreshInProgress=false;
 async function refresh(){
+ if(refreshInProgress)return;
+ refreshInProgress=true;
  const checkedAt=Date.now();
- const r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);
+ let r;
+ try{r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);}catch(e){refreshInProgress=false;return;}
  const nCandidate=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
  const tCandidate=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)?r[1].value:null;
  const fresh=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return !stamp||(Date.now()-stamp>=-30000&&Date.now()-stamp<180000);};
@@ -311,14 +317,17 @@ async function refresh(){
  sourceTryvoha.textContent=t?'Свежий ответ; обновлено '+sourceTime(t.updated_at):(tCandidate?'Устарели данные; последнее обновление: '+sourceTime(tCandidate.updated_at):'Нет ответа или нет метки времени');
  lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
  updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(t.updated_at).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
+ refreshInProgress=false;
 }
+let activeMapMode='neighbors';
 document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventListener('click',()=>{
  const mode=button.dataset.mapView, b=window.trevogaMapBounds;
+ activeMapMode=mode;
  if(!b)return;
  if(mode==='regions'){if(map.hasLayer(baseTiles))map.removeLayer(baseTiles);}else if(!map.hasLayer(baseTiles))baseTiles.addTo(map);
  document.querySelectorAll('[data-map-view]').forEach(x=>x.classList.toggle('active',x===button));
- map.fitBounds(mode==='neighbors'?b.neighbors:(mode==='ukraine'?b.ukraine:b.ukraine),{padding:mode==='regions'?[35,35]:[8,8],maxZoom:mode==='regions'?6.2:undefined});
- if(mode==='regions')map.zoomIn(0.7);
+ if(mode==='regions'){map.fitBounds(b.ukraine,{padding:[12,12],maxZoom:6});updated.textContent='Режим областей: нажми на нужную область, чтобы увеличить её.';}
+ else map.fitBounds(mode==='neighbors'?b.neighbors:b.ukraine,{padding:[8,8]});
 }));
 fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine.geojson')
 .then(r=>{if(!r.ok)throw Error('geojson');return r.json();})
@@ -327,6 +336,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   const n=nameOf(f.properties);l.regionName=n;layers.set(norm(n),l);l.bindTooltip(labelNameOfRegion(n),{permanent:true,direction:'center',className:'region-label',opacity:1});l.bindPopup('<b>'+n+'</b><br>Статус: Нет данных');
   l.on('mouseover',()=>l.setStyle({weight:2.5,color:'#182538'}));
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#7186a5',weight:1.1,fillColor:'#8995a5',fillOpacity:.76});});
+  l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
  }}).addTo(map);
  const ukraineBounds=layer.getBounds();
  window.trevogaMapBounds={ukraine:ukraineBounds,neighbors:L.latLngBounds([ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],[ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8])};
