@@ -28,7 +28,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 </head>
 <body><main>
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
-<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button></div><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
+<section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button><button id="enablePush" type="button" style="background:#5a4a91;display:none">Включить push при закрытом сайте</button><button id="disablePush" type="button" style="background:#42516a;display:none">Отключить push</button></div><p id="pushSettings" style="font-size:12px;margin-top:7px">Push при закрытом сайте пока не настроен: нужен отдельный сервер.</p><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="legend">
 <span><i class="dot red"></i> Красный уровень / тревога</span><span><i class="dot yellow"></i> Жёлтый уровень</span><span><i class="dot green"></i> Оба источника не показывают тревогу</span><span><i class="dot gray"></i> Нет данных</span>
@@ -37,7 +37,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <section class="card notice"><b>Важно</b><p>Карта является дополнительным информационным источником, а не системой экстренного оповещения. Не используй её для решения, идти ли в укрытие. Следуй сиренам и официальным указаниям служб. При сбое или устаревании данных показывается «Нет данных», а не «Тревоги нет».</p></section>
 <small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © OpenStreetMap.</small>
 </main>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./push-config.js"></script>
 <script>
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 const map=L.map('map',{scrollWheelZoom:false}).setView([48.7,31.2],5.5);
@@ -90,6 +90,55 @@ installButton.addEventListener('click',async()=>{
  deferredInstallPrompt=null;installButton.style.display='none';
 });
 window.addEventListener('appinstalled',()=>{installButton.style.display='none';deferredInstallPrompt=null;});
+const pushApi=String(window.TREVOGA_PUSH_API||'').replace(/\/+$/,'');
+const pushButton=document.getElementById('enablePush');
+const disablePushButton=document.getElementById('disablePush');
+const pushSettings=document.getElementById('pushSettings');
+let pushPublicKey=null;
+function decodeVapidKey(value){
+ const padding='='.repeat((4-value.length%4)%4);
+ const base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+ const raw=atob(base64),out=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+ return out;
+}
+if(pushApi){
+ fetch(pushApi+'/config').then(r=>{if(!r.ok)throw Error('Push server is not configured');return r.json();}).then(async data=>{
+  if(!data.publicKey)throw Error('Missing VAPID public key');
+  pushPublicKey=data.publicKey;pushButton.style.display='inline-block';
+  pushSettings.textContent='Сервер push подключён. Нажми кнопку, чтобы разрешить уведомления при закрытом сайте.';
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub)disablePushButton.style.display='inline-block';}catch(e){}
+ }).catch(()=>{pushSettings.textContent='Push-сервер указан, но пока не отвечает или не настроен.';});
+}
+pushButton.addEventListener('click',async()=>{
+ if(!pushPublicKey)return;
+ try{
+  if(!('Notification'in window))throw Error('Уведомления не поддерживаются этим браузером.');
+  let permission=Notification.permission;
+  if(permission==='default')permission=await Notification.requestPermission();
+  if(permission!=='granted')throw Error('Разрешение на уведомления не выдано.');
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeVapidKey(pushPublicKey)});
+  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(sub.toJSON())});
+  if(!response.ok)throw Error('Сервер не принял подписку.');
+  disablePushButton.style.display='inline-block';
+  pushSettings.textContent='Push подключён. Сервер сможет присылать уведомления при закрытом сайте, если браузер и телефон разрешают фоновые уведомления.';
+ }catch(error){pushSettings.textContent='Не удалось включить push: '+(error.message||'ошибка подключения');}
+});
+disablePushButton.addEventListener('click',async()=>{
+ try{
+  const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();
+  if(sub){
+   const response=await fetch(pushApi+'/subscribe',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});
+   if(!response.ok)throw Error('Сервер не удалил подписку.');
+   await sub.unsubscribe();
+  }
+  disablePushButton.style.display='none';
+  pushSettings.textContent='Push отключён на этом устройстве.';
+ }catch(error){pushSettings.textContent='Не удалось отключить push: '+(error.message||'ошибка');}
+});
+
 const slugMap={
 'вінницька область':'vinnytska','волинська область':'volynska','дніпропетровська область':'dnipropetrovska','донецька область':'donetska',
 'житомирська область':'zhytomyrska','закарпатська область':'zakarpatska','запорізька область':'zaporizka','івано-франківська область':'ivano-frankivska',
