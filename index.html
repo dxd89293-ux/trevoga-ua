@@ -421,10 +421,10 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
   l.on('mouseout',()=>{const s=states.get(norm(n));l.setStyle(s?styleOf(s):{color:'#713b3b',weight:1.05,fillColor:'#555d65',fillOpacity:.88});});
   l.on('click',()=>{if(activeMapMode==='regions')map.fitBounds(l.getBounds(),{padding:[24,24],maxZoom:8});});
  }}).addTo(map);
- // Отдельно подчёркиваем административную границу города Киева: она отделяет Киев от Киевской области.
- L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#d6d9dc',weight:2.5,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
  // Внешний контур Украины поверх тёмного фона в стиле карты-образца.
  L.geoJSON(data,{style:()=>({color:'#a6a9ad',weight:2.1,opacity:.95,fillOpacity:0}),interactive:false}).addTo(map);
+ // Отдельно подчёркиваем административную границу города Киева: она отделяет Киев от Киевской области.
+ L.geoJSON(data,{filter:feature=>slugOf(nameOf(feature.properties))==='kyiv',style:()=>({color:'#d6d9dc',weight:2.5,opacity:1,fillOpacity:0}),interactive:false}).addTo(map);
  const ukraineBounds=layer.getBounds();
  window.trevogaMapBounds={ukraine:ukraineBounds,neighbors:L.latLngBounds([ukraineBounds.getSouth()-2.4,ukraineBounds.getWest()-2.8],[ukraineBounds.getNorth()+2.4,ukraineBounds.getEast()+2.8])};
  const regionalBounds=L.latLngBounds(
