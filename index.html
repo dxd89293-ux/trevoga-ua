@@ -13,7 +13,7 @@ main{max-width:900px;margin:auto;padding:14px;display:grid;gap:12px}
 header{display:flex;align-items:center;gap:10px}header img{width:42px;height:42px}h1{font-size:21px;margin:0}p{margin:4px 0;color:var(--muted)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px}
 .status{font-size:18px;font-weight:700;margin:7px 0}.tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 9px;color:var(--muted);font-size:11px}
-#map{height:min(72vh,680px);min-height:350px;border-radius:11px;background:#111417;overflow:hidden}
+#map{height:min(72vh,680px);min-height:350px;border-radius:11px;background:#17201c;overflow:hidden}
 .legend{display:flex;flex-wrap:wrap;gap:9px 14px;margin-top:12px}.legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .dot{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid #718096}
 .red{background:#e34b4b}.yellow{background:#f2c94c}.green{background:#43a66b}.gray{background:#8995a5}
@@ -28,8 +28,8 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;margin-top:10px}.region-choice{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:8px;font-size:12px}.region-choice input{accent-color:#4f8bd8;width:17px;height:17px}.setting-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.duration{display:block;color:var(--muted);font-size:10px;margin-top:4px}.history-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}.history-stat{background:#111d2e;border:1px solid var(--line);border-radius:10px;padding:10px}.history-stat strong{display:block;font-size:22px}.history-stat span{font-size:11px;color:var(--muted)}#historyList{display:grid;gap:7px;margin-top:10px}.history-entry{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:9px;font-size:12px}.history-entry b{display:block}.history-entry small{display:block}.history-entry .event-type{font-weight:700;white-space:nowrap}.history-entry.alert .event-type{color:#ff7777}.history-entry.clear .event-type{color:#55c88a}.history-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
 @media(max-width:520px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.source-grid{grid-template-columns:1fr}}
 .leaflet-container{font:13px system-ui,sans-serif}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#1b283b;color:#f4f7fb}.leaflet-control-attribution{font-size:9px}.leaflet-tooltip-pane{transition:none!important}.region-label-marker{background:transparent;border:0;pointer-events:none}.region-label-text{display:flex;width:108px;height:30px;max-width:108px;align-items:center;justify-content:center;padding:1px 3px;text-align:center;white-space:normal;overflow:hidden;overflow-wrap:anywhere;word-break:normal;color:#e2e6eb;font-size:10px;font-weight:850;line-height:11px;text-shadow:0 1px 3px #090d12,0 0 6px #090d12;letter-spacing:.35px;text-transform:uppercase;pointer-events:none}.city-label-marker{background:transparent;border:0;pointer-events:none}.city-label-text{position:relative;left:50%;transform:translateX(-50%);display:inline-block;width:max-content;max-width:150px;padding:1px 6px;text-align:center;white-space:nowrap;color:#f7f9fc;font-size:10px;font-weight:800;line-height:15px;background:rgba(9,14,20,.92);border:1px solid rgba(205,216,230,.65);border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.45);text-shadow:0 1px 2px #000;letter-spacing:.1px;pointer-events:none}
-.map-stage{position:relative;border:1px solid #34445a;border-radius:14px;overflow:hidden;background:#0b1422}
-#map{height:min(78vh,760px);min-height:430px;border-radius:0;background:#0b1422}
+.map-stage{position:relative;border:1px solid #34445a;border-radius:14px;overflow:hidden;background:#17201c}
+#map{height:min(78vh,760px);min-height:430px;border-radius:0;background:#17201c}
 .map-overlay{position:absolute;z-index:700;pointer-events:none}
 .map-head{top:12px;left:12px;display:flex;align-items:center;gap:9px;background:rgba(9,17,30,.88);border:1px solid #34445a;border-radius:12px;padding:9px 12px;box-shadow:0 5px 20px #0006}
 .map-head .shield{font-size:25px}.map-head b{display:block;font-size:16px;color:#fff}.map-head small{display:block;color:#c5d0df;font-size:11px}
@@ -64,13 +64,14 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <section class="card"><h2 style="font-size:17px;margin:0">Статусы регионов</h2><div id="regions"><p>Загружаются границы областей…</p></div></section>
 <section class="card"><h2 style="font-size:17px;margin:0">История тревог и отбоев</h2><p id="historySource">История загружается…</p><div class="history-stats"><div class="history-stat"><strong id="historyAlerts">—</strong><span>Начало тревог сегодня</span></div><div class="history-stat"><strong id="historyClears">—</strong><span>Отбоев сегодня</span></div></div><div id="historyList"><small>Пока нет записей.</small></div><div class="history-actions"><button id="refreshHistory" type="button">Обновить историю</button><button id="clearLocalHistory" type="button" style="background:#42516a">Очистить локальную историю</button></div><small>История с сервера появляется после обновления Cloudflare Worker. Локальные записи сохраняются только на этом устройстве и фиксируются, пока сайт открыт.</small></section>
 <section class="card notice"><b>Важно</b><p>Карта является дополнительным информационным источником, а не системой экстренного оповещения. Не используй её для решения, идти ли в укрытие. Следуй сиренам и официальным указаниям служб. При сбое или устаревании данных показывается «Нет данных», а не «Тревоги нет».</p></section>
-<small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © OpenStreetMap.</small>
+<small>Границы областей: OpenStreetMap contributors, данные GeoJSON проекта darmat1/ukraine-geo-data. Подложка карты: © Esri / Maxar; подписи: OpenStreetMap contributors.</small>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./push-config.js"></script>
 <script>
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 const map=L.map('map',{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,zoomSnap:0.5,zoomDelta:0.5}).setView([48.7,31.2],5.5);
-const baseTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'});
+const baseTiles=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics'}).addTo(map);
+const satelliteLabels=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,opacity:.88,attribution:'© OpenStreetMap contributors'}).addTo(map);
 const regions=document.getElementById('regions'), connection=document.getElementById('connection'), updated=document.getElementById('updated');
 const historyList=document.getElementById('historyList'),historySource=document.getElementById('historySource');
 let localHistory=[];try{const h=JSON.parse(localStorage.getItem('trevogaHistoryV1')||'[]');if(Array.isArray(h))localHistory=h.filter(x=>x&&typeof x.region==='string'&&typeof x.active==='boolean'&&Number.isFinite(Number(x.timestamp))).slice(0,300);}catch(e){}
@@ -316,25 +317,28 @@ const regionLabelLayer=L.layerGroup().addTo(map);
 // Названия областей остаются видимыми на общем масштабе.
 // Подписи городов включаются отдельно при приближении, чтобы не смешивать два уровня карты.
 function updateRegionLabelVisibility(){
- regionLabelPane.style.display='';
- const compact=map.getSize().x<600&&map.getZoom()<6.5;
+ const nationalView=map.getZoom()<6.5;
+ regionLabelPane.style.display=nationalView?'none':'';
+ const compact=map.getSize().x<600&&nationalView;
  regionLabelLayer.eachLayer(marker=>{
   const el=marker.getElement&&marker.getElement();
   const label=el&&el.querySelector('.region-label-text');
   if(label)label.textContent=compact?(label.dataset.short||label.dataset.full):label.dataset.full;
  });
- cityLabelPane.style.display=map.getZoom()>=6.5?'':'none';
+ cityLabelPane.style.display='';
+ cityLabelLayer.eachLayer(marker=>{const el=marker.getElement&&marker.getElement();const label=el&&el.querySelector('.city-label-text');if(label){const major=label.dataset.major==='true';label.style.display=(!nationalView||major)?'inline-block':'none';}});
 }
 const cityLabelPane=map.createPane('cityLabelsPane');
 cityLabelPane.style.zIndex='660';
 cityLabelPane.style.pointerEvents='none';
 const cityLabelLayer=L.layerGroup().addTo(map);
 ukraineCityLabels.forEach(city=>{
- const icon=L.divIcon({className:'city-label-marker',html:'<span class="city-label-text">'+escapeHtml(city.name)+'</span>',iconSize:[160,24],iconAnchor:[80,12]});
+ const major=['Киев','Львов','Харьков','Днепр','Одесса'].includes(city.name);const icon=L.divIcon({className:'city-label-marker',html:'<span class="city-label-text" data-major="'+major+'">'+escapeHtml(city.name)+'</span>',iconSize:[160,24],iconAnchor:[80,12]});
  L.marker([city.lat,city.lng],{icon,pane:'cityLabelsPane',interactive:false,keyboard:false,riseOnHover:false}).addTo(cityLabelLayer);
 });
 map.on('zoomend',updateRegionLabelVisibility);
 map.on('resize',updateRegionLabelVisibility);
+map.on('zoomend',()=>{satelliteLabels.setOpacity(map.getZoom()<6?0.72:0.9);});
 updateRegionLabelVisibility();
 
 function styleOf(s){return {color:s.partial?'#aebbc9':'#9fb0c8',weight:s.partial?1.8:1.05,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.92};}
@@ -449,7 +453,7 @@ document.querySelectorAll('[data-map-view]').forEach(button=>button.addEventList
  const mode=button.dataset.mapView, b=window.trevogaMapBounds;
  activeMapMode=mode;
  if(!b)return;
- if(map.hasLayer(baseTiles))map.removeLayer(baseTiles);
+ if(!map.hasLayer(baseTiles))baseTiles.addTo(map);if(!map.hasLayer(satelliteLabels))satelliteLabels.addTo(map);
  document.querySelectorAll('[data-map-view]').forEach(x=>x.classList.toggle('active',x===button));
  if(mode==='regions'){map.fitBounds(b.ukraine,{padding:[12,12],maxZoom:6});updated.textContent='Режим областей: нажми на нужную область, чтобы увеличить её.';}
  else map.fitBounds(b.ukraine,{padding:[8,8]});
