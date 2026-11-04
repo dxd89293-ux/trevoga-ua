@@ -402,7 +402,7 @@ function calculate(n,t){
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&active)level='unknown';
   const both=!!n&&tFresh&&statusSupported;
-  const known=statusSupported&&!conflict&&(both||(active&&(!!n||tFresh)));
+  const known=both&&!conflict;
   const tItems=matches.filter(x=>x.slug===slug||x.oblast_slug===slug);
   out.push([name,{known,active,partial,conflict,level,items:[...nFullItems,...nPartItems,...tItems]}]);
  }
