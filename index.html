@@ -76,7 +76,7 @@ const baseTiles=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/service
 const neptunThreatLayer=L.layerGroup().addTo(map);
 const neptunThreatSummary=document.getElementById('neptunThreatSummary');
 const neptunThreatList=document.getElementById('neptunThreatList');
-let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0;
+let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0,neptunSdkLoading=false;
 const threatNames={uav:'БПЛА',recon:'Разведывательный БПЛА',missile:'Ракета',ballistic:'Баллистическая ракета',kab:'КАБ',mig31k:'МиГ-31К',fpv:'FPV-дрон',unknown:'Неизвестный тип'};
 function threatFresh(t){const stamp=timeOf(t.updatedAt);return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;}
 function threatLabel(t){return t.title||threatNames[t.type]||'Воздушная угроза';}
@@ -111,14 +111,27 @@ function renderNeptunThreats(snapshot){
  if(!active.length){const empty=document.createElement('small');empty.textContent='Сейчас нет активных записей угроз в свежем снимке NEPTUN.';neptunThreatList.append(empty);}
 }
 function startNeptunThreatStream(){
+ if(neptunRealtimeClient)return;
  if(!window.NEPTUN||typeof window.NEPTUN.RealtimeClient!=='function'){
-  neptunThreatSummary.textContent='SDK NEPTUN не загрузился. Слой угроз недоступен.';return;
+  neptunThreatSummary.textContent='Подключаем SDK NEPTUN. Если сеть недоступна, повторим при восстановлении интернета.';
+  if(neptunSdkLoading)return;
+  neptunSdkLoading=true;
+  const script=document.createElement('script');
+  script.src='https://neptun.in.ua/sdk/neptun.js';
+  script.onload=()=>{neptunSdkLoading=false;startNeptunThreatStream();};
+  script.onerror=()=>{neptunSdkLoading=false;neptunThreatSummary.textContent='SDK NEPTUN пока недоступен. Повторим подключение при восстановлении интернета.';};
+  document.head.append(script);
+  return;
  }
  try{
   neptunRealtimeClient=new NEPTUN.RealtimeClient('https://neptun.in.ua');
   neptunUnsubscribe=neptunRealtimeClient.subscribe(renderNeptunThreats);
   neptunRealtimeClient.start();
- }catch(e){neptunThreatSummary.textContent='Не удалось подключить поток NEPTUN. Повторите позже.';}
+ }catch(e){
+  neptunRealtimeClient=null;
+  neptunThreatSummary.textContent='Не удалось подключить поток NEPTUN. Повторите позже.';
+  console.error('NEPTUN stream start failed',e);
+ }
 }
 startNeptunThreatStream();
 setInterval(()=>{
@@ -559,7 +572,13 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  window.trevogaMapBounds={ukraine:ukraineBounds};
  map.fitBounds(ukraineBounds,{padding:[12,12]});updateRegionLabelVisibility();drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
- refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);window.addEventListener('online',()=>{refresh();loadHistory();});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
+ refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);window.addEventListener('online',()=>{
+ refresh();loadHistory();
+ if(neptunRealtimeClient&&typeof neptunRealtimeClient.retry==='function'){
+  try{const retryResult=neptunRealtimeClient.retry();if(retryResult&&typeof retryResult.catch==='function')retryResult.catch(e=>console.warn('NEPTUN retry failed',e));}
+  catch(e){console.warn('NEPTUN retry failed',e);}
+ }else startNeptunThreatStream();
+});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
 .catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь интернет.</p>';connection.textContent='Карта недоступна';updated.textContent='Нет данных.';});
 </script></body></html>
