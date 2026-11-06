@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-ALLOWED_ORIGIN = "https://trevoga-ua.onrender.com"
+ALLOWED_ORIGINS = "https://trevoga-ua.onrender.com,https://dxd89293-ux.github.io"
 
 [[kv_namespaces]]
 binding = "SUBSCRIPTIONS"
