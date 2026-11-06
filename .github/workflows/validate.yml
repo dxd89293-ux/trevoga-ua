@@ -39,5 +39,11 @@ jobs:
           if (result.status !== 0) process.exit(result.status ?? 1);
           JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
           JSON.parse(fs.readFileSync('push-server/package.json', 'utf8'));
-          console.log('JavaScript syntax and JSON checks passed.');
+          const workerConfig = fs.readFileSync('push-server/wrangler.toml', 'utf8');
+          const origins = workerConfig.match(/^ALLOWED_ORIGINS\s*=\s*"([^"]+)"/m)?.[1]?.split(',').map(x => x.trim()) ?? [];
+          for (const origin of ['https://trevoga-ua.onrender.com', 'https://dxd89293-ux.github.io']) {
+            if (!origins.includes(origin)) throw new Error('Missing allowed push origin: ' + origin);
+          }
+          if (!html.includes("window.TREVOGA_PUSH_API")) throw new Error('Push API config not referenced by app');
+          console.log('JavaScript, JSON, push origin and app config checks passed.');
           NODE
