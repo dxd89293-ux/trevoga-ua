@@ -59,15 +59,30 @@ async function fetchJson(url) {
   try {
     const response = await fetch(url, { cache: "no-store", signal: controller.signal });
     if (!response.ok) throw new Error("Source HTTP " + response.status);
-    return await response.json();
+    const data = await response.json();
+    if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid source payload");
+    // NEPTUN /api/v1/alerts does not promise a timestamp in its JSON body.
+    // Record fetch time and HTTP cache metadata so freshness can be evaluated honestly.
+    const ageSeconds = Number(response.headers.get("Age"));
+    const dateHeader = Date.parse(response.headers.get("Date") || "");
+    return {
+      ...data,
+      _fetchedAt: Date.now(),
+      _httpDate: Number.isFinite(dateHeader) ? dateHeader : null,
+      _cacheAgeMs: Number.isFinite(ageSeconds) && ageSeconds >= 0 ? ageSeconds * 1000 : 0
+    };
   } finally { clearTimeout(timer); }
 }
 function currentStates(neptun, tryvoha) {
   const oblasts = Array.isArray(neptun?.oblasts) ? neptun.oblasts : [];
   const raions = Array.isArray(neptun?.raions) ? neptun.raions : [];
   // NEPTUN is the primary alert source. Tryvoha is auxiliary and cannot block primary-state push events.
-  const neptunStamp = timestampOf(neptun?.updated_at || neptun?.updatedAt || neptun?.timestamp);
-  const neptunFresh = neptunStamp > 0 && Date.now() - neptunStamp >= -30000 && Date.now() - neptunStamp < 180000;
+  const sourceStamp = timestampOf(neptun?.serverTime || neptun?.updated_at || neptun?.updatedAt || neptun?.timestamp);
+  const receivedAt = Number(neptun?._fetchedAt) || 0;
+  const httpDate = Number(neptun?._httpDate) || 0;
+  const cacheAgeMs = Number(neptun?._cacheAgeMs) || 0;
+  const sourceAgeMs = sourceStamp > 0 ? Date.now() - sourceStamp : receivedAt > 0 ? Date.now() - receivedAt : httpDate > 0 ? Date.now() - httpDate : Infinity;
+  const neptunFresh = sourceAgeMs >= -30000 && sourceAgeMs + cacheAgeMs < 180000;
   if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !neptunFresh) return null;
 
   const states = {};
@@ -232,11 +247,12 @@ export default {
       if (!rawSubscription?.endpoint || !rawSubscription?.keys?.p256dh || !rawSubscription?.keys?.auth || !allowedPushHost(rawSubscription.endpoint)) {
         return json({ error: "Invalid push subscription" }, 400, cors);
       }
-      const { regions: ignoredRegions, ...sub } = rawSubscription;
+      const { regions: ignoredRegions, vibration: ignoredVibration, ...sub } = rawSubscription;
       const regions = Array.isArray(body?.regions)
         ? [...new Set(body.regions.filter(slug => Object.prototype.hasOwnProperty.call(REGIONS, slug)))]
         : Array.isArray(ignoredRegions) ? [...new Set(ignoredRegions.filter(slug => Object.prototype.hasOwnProperty.call(REGIONS, slug)))] : null;
-      await env.SUBSCRIPTIONS.put(await keyFor(sub.endpoint), JSON.stringify({ subscription: sub, regions }));
+      const vibration = typeof body?.vibration === "boolean" ? body.vibration : typeof ignoredVibration === "boolean" ? ignoredVibration : true;
+      await env.SUBSCRIPTIONS.put(await keyFor(sub.endpoint), JSON.stringify({ subscription: sub, regions, vibration }));
       return json({ ok: true }, 201, cors);
     }
     if (url.pathname === "/subscribe" && request.method === "DELETE") {
