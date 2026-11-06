@@ -81,7 +81,7 @@ function currentStates(neptun, tryvoha) {
   const receivedAt = Number(neptun?._fetchedAt) || 0;
   const httpDate = Number(neptun?._httpDate) || 0;
   const cacheAgeMs = Number(neptun?._cacheAgeMs) || 0;
-  const sourceAgeMs = sourceStamp > 0 ? Date.now() - sourceStamp : receivedAt > 0 ? Date.now() - receivedAt : httpDate > 0 ? Date.now() - httpDate : Infinity;
+  const sourceAgeMs = sourceStamp > 0 ? Date.now() - sourceStamp : httpDate > 0 ? Date.now() - httpDate : receivedAt > 0 ? Date.now() - receivedAt : Infinity;
   const neptunFresh = sourceAgeMs >= -30000 && sourceAgeMs + cacheAgeMs < 180000;
   if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !neptunFresh) return null;
 
