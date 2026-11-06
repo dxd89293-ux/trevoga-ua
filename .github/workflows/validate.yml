@@ -58,6 +58,10 @@ jobs:
           if (!html.includes('const known=!!n&&statusSupported')) throw new Error('NEPTUN is not the primary client alert source');
           if (!worker.includes('states[slug] = nFull || nPart;')) throw new Error('NEPTUN is not the primary push alert source');
           if (!worker.includes('results[0].status === "fulfilled"')) throw new Error('Primary NEPTUN push state must not depend on auxiliary feed availability');
+          if (!worker.includes('vibration: typeof savedVibration === "boolean" ? savedVibration : true')) throw new Error('Per-device push vibration preference is not retained');
+          if (!worker.includes('vibrate: item.vibration ? payload.vibrate : []')) throw new Error('Per-device push vibration preference is not applied');
+          if (!html.includes('vibration:vibrationEnabled')) throw new Error('App vibration setting is not synced to push server');
+          if (!html.includes('УРОВЕНЬ · TRYVOHA')) throw new Error('Secondary alert severity source is not disclosed');
           if (worker.includes('results.every(x => x.status === "fulfilled")')) throw new Error('Auxiliary source failure must not block NEPTUN push alerts');
           if (!html.includes('выделены оранжевым как неподтверждённые')) throw new Error('Unconfirmed alert color explanation is inconsistent');
           if (worker.includes('tryvohaFresh')) throw new Error('Auxiliary Tryvoha freshness must not block primary push state');
