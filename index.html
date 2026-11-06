@@ -533,7 +533,7 @@ async function refresh(){
  sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
  sourceTryvoha.textContent=t?'Свежий ответ; обновлено '+sourceTime(t.updated_at||t.updatedAt||t.timestamp):(tCandidate?'Устарели данные; последнее обновление: '+sourceTime(tCandidate.updated_at||tCandidate.updatedAt||tCandidate.timestamp):'Нет ответа или нет метки времени');
  lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
-document.getElementById('mapLiveText').textContent='Оновлено: '+new Date(checkedAt).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
+document.getElementById('mapLiveText').textContent='Перевірено: '+new Date(checkedAt).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
  updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(timeOf(t.updated_at||t.updatedAt||t.timestamp)).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
  }catch(error){
   // Если обработка ответа сломалась, не оставляем на карте старый подтверждённый статус.
