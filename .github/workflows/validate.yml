@@ -60,6 +60,7 @@ jobs:
           if (!worker.includes('results[0].status === "fulfilled"')) throw new Error('Primary NEPTUN push state must not depend on auxiliary feed availability');
           if (!worker.includes('vibration: typeof savedVibration === "boolean" ? savedVibration : true')) throw new Error('Per-device push vibration preference is not retained');
           if (!worker.includes('vibrate: item.vibration ? payload.vibrate : []')) throw new Error('Per-device push vibration preference is not applied');
+          if (!worker.includes('NEPTUN сообщил о тревоге')) throw new Error('Background push alert source attribution is incorrect');
           if (!html.includes('vibration:vibrationEnabled')) throw new Error('App vibration setting is not synced to push server');
           if (!html.includes('УРОВЕНЬ · TRYVOHA')) throw new Error('Secondary alert severity source is not disclosed');
           if (worker.includes('results.every(x => x.status === "fulfilled")')) throw new Error('Auxiliary source failure must not block NEPTUN push alerts');
