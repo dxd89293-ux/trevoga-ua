@@ -468,6 +468,7 @@ let refreshInProgress=false;
 async function refresh(){
  if(refreshInProgress)return;
  refreshInProgress=true;
+ try{
  const checkedAt=Date.now();
  let r;
  try{r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);}catch(e){refreshInProgress=false;return;}
@@ -499,7 +500,13 @@ async function refresh(){
  lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
 document.getElementById('mapLiveText').textContent='Оновлено: '+new Date(checkedAt).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
  updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(timeOf(t.updated_at||t.updatedAt||t.timestamp)).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
- refreshInProgress=false;
+ }catch(error){
+  connection.textContent='Ошибка обновления';
+  updated.textContent='Не удалось обработать ответ источников. Проверь официальные оповещения и повтори попытку позже.';
+  console.error('Trevoga UA refresh failed',error);
+ }finally{
+  refreshInProgress=false;
+ }
 }
 let activeMapMode='ukraine';
 document.getElementById('mapZoomIn').addEventListener('click',()=>map.zoomIn());
