@@ -65,25 +65,17 @@ async function fetchJson(url) {
 function currentStates(neptun, tryvoha) {
   const oblasts = Array.isArray(neptun?.oblasts) ? neptun.oblasts : [];
   const raions = Array.isArray(neptun?.raions) ? neptun.raions : [];
-  const alerts = Array.isArray(tryvoha?.alerts) ? tryvoha.alerts : [];
-  const stamp = timestampOf(tryvoha?.updated_at || tryvoha?.updatedAt || tryvoha?.timestamp);
-  const tryvohaFresh = Number.isFinite(stamp) && Date.now() - stamp >= -30000 && Date.now() - stamp < 180000;
+  // NEPTUN is the primary alert source. Tryvoha is auxiliary and cannot block primary-state push events.
   const neptunStamp = timestampOf(neptun?.updated_at || neptun?.updatedAt || neptun?.timestamp);
   const neptunFresh = neptunStamp > 0 && Date.now() - neptunStamp >= -30000 && Date.now() - neptunStamp < 180000;
-  if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !tryvohaFresh || !neptunFresh) return null;
+  if (!Array.isArray(neptun?.oblasts) || !Array.isArray(neptun?.raions) || !neptunFresh) return null;
 
   const states = {};
   for (const [slug, name] of Object.entries(REGIONS)) {
     const nFull = oblasts.some(x => norm(x.name) === norm(name) || norm(x.oblast) === norm(name));
     const nPart = raions.some(x => norm(x.oblast) === norm(name));
-    const matches = alerts.filter(x => x.slug === slug || x.oblast_slug === slug);
-    const tFull = matches.some(x => x.slug === slug && x.type !== "district");
-    const tPart = matches.some(x => x.type === "district");
-    const nActive = nFull || nPart;
-    const tActive = tFull || tPart;
-    // Notify only when both independent feeds agree. A disagreement is unknown,
-    // so it resets the baseline for this region without producing a push.
-    states[slug] = nActive === tActive ? nActive : null;
+    // Region alert state is determined by NEPTUN only; auxiliary feeds never override it.
+    states[slug] = nFull || nPart;
   }
   return states;
 }
