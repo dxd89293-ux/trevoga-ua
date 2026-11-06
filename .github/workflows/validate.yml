@@ -54,7 +54,9 @@ jobs:
           if (!sw.includes("self.addEventListener('notificationclick'")) throw new Error('Notification click handler is missing');
           const worker = fs.readFileSync('push-server/src/index.js', 'utf8');
           if (!worker.includes('allowedOrigins.includes(origin)')) throw new Error('Worker origin allowlist check is missing');
-          if (!worker.includes('Date.now() - neptunStamp < 180000')) throw new Error('Worker NEPTUN freshness guard is missing');
+          if (!worker.includes('sourceAgeMs + cacheAgeMs < 180000')) throw new Error('Worker NEPTUN freshness guard is missing');
+          if (!worker.includes('_fetchedAt: Date.now()') || !worker.includes('_httpDate: Number.isFinite(dateHeader) ? dateHeader : null')) throw new Error('Worker must evaluate NEPTUN HTTP freshness metadata');
+          if (!worker.includes('JSON.stringify({ subscription: sub, regions, vibration })')) throw new Error('Worker must persist the per-device vibration preference');
           if (!html.includes('const known=!!n&&statusSupported')) throw new Error('NEPTUN is not the primary client alert source');
           if (!worker.includes('states[slug] = nFull || nPart;')) throw new Error('NEPTUN is not the primary push alert source');
           if (!worker.includes('results[0].status === "fulfilled"')) throw new Error('Primary NEPTUN push state must not depend on auxiliary feed availability');
