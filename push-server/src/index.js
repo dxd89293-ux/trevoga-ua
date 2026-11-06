@@ -156,7 +156,8 @@ async function deliverPending(env) {
       title: item.active ? "Повітряна тривога" : "Відбій повітряної тривоги",
       body: item.region + (item.active ? " — джерела зафіксували тривогу." : " — джерела більше не показують тривогу."),
       url: "/",
-      tag: item.id
+      tag: item.id,
+      vibrate: item.active ? [300, 150, 300] : [120, 80, 120]
     }, item.slug);
     if (!sent) retry.push(item);
   }
