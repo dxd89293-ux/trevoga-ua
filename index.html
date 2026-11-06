@@ -490,7 +490,7 @@ function calculate(n,t){
   const active=n?nActive:tActive;
   // Сравниваем только два доступных источника; недоступный источник не считается расхождением.
   const conflict=!!n&&tFresh&&statusSupported&&nActive!==tActive;
-  const partial=(nPart||tPart)&&!(nFull||tFull);
+  const partial=n?(nPart&&!nFull):(tPart&&!tFull);
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&active)level='unknown';
   // NEPTUN — главный источник статуса тревог; Tryvoha используется для дополнительной сверки.
