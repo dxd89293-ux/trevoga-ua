@@ -45,5 +45,14 @@ jobs:
             if (!origins.includes(origin)) throw new Error('Missing allowed push origin: ' + origin);
           }
           if (!html.includes("window.TREVOGA_PUSH_API")) throw new Error('Push API config not referenced by app');
-          console.log('JavaScript, JSON, push origin and app config checks passed.');
+          if (!html.includes("Данные NEPTUN устарели более чем на 3 минуты")) throw new Error('Stale NEPTUN threat cleanup is missing');
+          if (!html.includes("t.advisory===true")) throw new Error('NEPTUN advisory handling is missing');
+          if (!html.includes("t.areaOnly!==true")) throw new Error('Area-only NEPTUN records must not become point markers');
+          const sw = fs.readFileSync('sw.js', 'utf8');
+          if (!sw.includes("self.addEventListener('push'")) throw new Error('Service Worker push handler is missing');
+          if (!sw.includes("self.addEventListener('notificationclick'")) throw new Error('Notification click handler is missing');
+          const worker = fs.readFileSync('push-server/src/index.js', 'utf8');
+          if (!worker.includes('allowedOrigins.includes(origin)')) throw new Error('Worker origin allowlist check is missing');
+          if (!worker.includes('Date.now() - neptunStamp < 180000')) throw new Error('Worker NEPTUN freshness guard is missing');
+          console.log('Syntax, JSON, CORS, freshness, threat safety and push handler checks passed.');
           NODE
