@@ -485,7 +485,7 @@ function calculate(n,t){
   const tFull=matches.some(x=>x.slug===slug&&x.type!=='district');
   const tPart=matches.some(x=>x.type==='district');
   const statusSupported=!!slug&&slug!=='crimea'&&slug!=='sevastopol';
-  const nActive=nFull||nPart,tActive=tFull||tPart,active=nActive||tActive;
+  const nActive=nFull||nPart,tActive=tFull||tPart;\n  // При доступном NEPTUN статус определяет он; Tryvoha не может переопределить главный источник.\n  const active=n?nActive:tActive;
   // Сравниваем только два доступных источника; недоступный источник не считается расхождением.
   const conflict=!!n&&tFresh&&statusSupported&&nActive!==tActive;
   const partial=(nPart||tPart)&&!(nFull||tFull);
