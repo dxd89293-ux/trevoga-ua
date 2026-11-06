@@ -160,8 +160,10 @@ async function checkAndNotify(env) {
     fetchJson("https://neptun.in.ua/api/v1/alerts"),
     fetchJson("https://tryvoha.online/api/v1/alerts")
   ]);
-  const states = results.every(x => x.status === "fulfilled")
-    ? currentStates(results[0].value, results[1].value)
+  // Only the primary NEPTUN response is required for confirmed alert state.
+  // Tryvoha is an optional cross-check and must never block primary notifications.
+  const states = results[0].status === "fulfilled"
+    ? currentStates(results[0].value, results[1].status === "fulfilled" ? results[1].value : null)
     : null;
 
   if (states) {
