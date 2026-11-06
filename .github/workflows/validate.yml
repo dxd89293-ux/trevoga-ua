@@ -55,6 +55,9 @@ jobs:
           const worker = fs.readFileSync('push-server/src/index.js', 'utf8');
           if (!worker.includes('allowedOrigins.includes(origin)')) throw new Error('Worker origin allowlist check is missing');
           if (!worker.includes('Date.now() - neptunStamp < 180000')) throw new Error('Worker NEPTUN freshness guard is missing');
+          if (!html.includes('const known=!!n&&statusSupported')) throw new Error('NEPTUN is not the primary client alert source');
+          if (!worker.includes('states[slug] = nFull || nPart;')) throw new Error('NEPTUN is not the primary push alert source');
+          if (worker.includes('tryvohaFresh')) throw new Error('Auxiliary Tryvoha freshness must not block primary push state');
           if (!html.includes('const confirmedStates=new Map()')) throw new Error('Confirmed alert state memory is missing');
           if (!html.includes("s.active?(s.known?") || !html.includes("#e58a32")) throw new Error('Unconfirmed alert visual state is missing');
           if (!worker.includes('Unknown/conflicting data must not erase the last confirmed state.')) throw new Error('Worker confirmed baseline retention is missing');
