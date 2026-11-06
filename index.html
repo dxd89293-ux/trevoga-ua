@@ -501,8 +501,18 @@ async function refresh(){
 document.getElementById('mapLiveText').textContent='Оновлено: '+new Date(checkedAt).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
  updated.textContent=n&&data.tFresh?'Источники доступны. Последнее обновление Tryvoha: '+new Date(timeOf(t.updated_at||t.updatedAt||t.timestamp)).toLocaleTimeString('ru-RU')+'.':(n||data.tFresh?'Доступен один источник; отсутствие подтверждения не считается отсутствием тревоги.':'Источники недоступны или устарели. Статусы показаны как «Нет данных».');
  }catch(error){
+  // Если обработка ответа сломалась, не оставляем на карте старый подтверждённый статус.
+  for(const [key,layer] of layers){
+   const unknownState={known:false,active:false,level:null,conflict:false,items:[]};
+   applyState(layer.regionName,unknownState);
+  }
+  document.getElementById('countRed').textContent='0';
+  document.getElementById('countYellow').textContent='0';
+  document.getElementById('countClear').textContent='0';
+  document.getElementById('countUnknown').textContent=String(layers.size);
+  document.getElementById('summaryText').textContent='Не удалось обработать данные. Статусы регионов сброшены до «Нет данных».';
   connection.textContent='Ошибка обновления';
-  updated.textContent='Не удалось обработать ответ источников. Проверь официальные оповещения и повтори попытку позже.';
+  updated.textContent='Не удалось обработать ответ источников. Статусы не подтверждены. Проверь официальные оповещения и повтори попытку позже.';
   console.error('Trevoga UA refresh failed',error);
  }finally{
   refreshInProgress=false;
@@ -549,7 +559,7 @@ fetch('https://cdn.jsdelivr.net/gh/darmat1/ukraine-geo-data@main/geodata/Ukraine
  window.trevogaMapBounds={ukraine:ukraineBounds};
  map.fitBounds(ukraineBounds,{padding:[12,12]});updateRegionLabelVisibility();drawList(data.features||[]);renderRegionChoices(data.features||[]);
  if((data.features||[]).length!==27){updated.textContent='Загружено регионов: '+(data.features||[]).length+' из ожидаемых 27. Проверь источник границ.';}
- refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
+ refresh();loadHistory();setInterval(refresh,60000);setInterval(loadHistory,60000);window.addEventListener('online',()=>{refresh();loadHistory();});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();loadHistory();}});setInterval(()=>{for(const [name,s] of states){if(s.active){const el=document.querySelector('[data-region="'+CSS.escape(name)+'"] .duration');if(el)el.textContent=formatDuration(s.startedAt);}}},60000);
 })
 .catch(()=>{regions.innerHTML='<p>Не удалось загрузить границы. Проверь интернет.</p>';connection.textContent='Карта недоступна';updated.textContent='Нет данных.';});
 </script></body></html>
