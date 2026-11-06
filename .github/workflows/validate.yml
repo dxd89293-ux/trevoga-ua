@@ -73,5 +73,8 @@ jobs:
           if (!worker.includes('Unknown/conflicting data must not erase the last confirmed state.')) throw new Error('Worker confirmed baseline retention is missing');
           if (!worker.includes('vibrate: item.active ? [300, 150, 300] : [120, 80, 120]')) throw new Error('Push vibration patterns are missing');
           if (!sw.includes('vibrate:Array.isArray(data.vibrate)')) throw new Error('Background push vibration handler is missing');
+          if (!html.includes('freshNeptun=value=>')) throw new Error('Client NEPTUN freshness must not require a JSON timestamp');
+          if (!html.includes('_httpDate:Number.isFinite(dateHeader)?dateHeader:null') || !html.includes('_cacheAgeMs:Number.isFinite(ageSeconds)')) throw new Error('Client must evaluate HTTP Date/Age freshness metadata');
+          if (!html.includes('age+cacheAge<180000')) throw new Error('Client NEPTUN cache-aware freshness guard is missing');
           console.log('Syntax, JSON, CORS, freshness, threat safety and push handler checks passed.');
           NODE
