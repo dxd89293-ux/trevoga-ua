@@ -77,7 +77,7 @@ const neptunThreatLayer=L.layerGroup().addTo(map);
 const neptunThreatSummary=document.getElementById('neptunThreatSummary');
 const neptunThreatList=document.getElementById('neptunThreatList');
 let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0;
-const threatNames={uav:'БПЛА',recon:'Разведывательный БПЛА',missile:'Ракета',ballistic:'Баллистическая ракета',kab:'КАБ',mig31k:'МиГ-31К',unknown:'Неизвестный тип'};
+const threatNames={uav:'БПЛА',recon:'Разведывательный БПЛА',missile:'Ракета',ballistic:'Баллистическая ракета',kab:'КАБ',mig31k:'МиГ-31К',fpv:'FPV-дрон',unknown:'Неизвестный тип'};
 function threatFresh(t){const stamp=timeOf(t.updatedAt);return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;}
 function threatLabel(t){return t.title||threatNames[t.type]||'Воздушная угроза';}
 function renderNeptunThreats(snapshot){
@@ -91,13 +91,13 @@ function renderNeptunThreats(snapshot){
   const label=threatLabel(t),region=t.region||'Регион не указан',stamp=timeOf(t.updatedAt);
   const row=document.createElement('div');row.style.cssText='font-size:12px;padding:6px 8px;border:1px solid #34445a;border-radius:8px';
   const advisory=t.advisory===true;
-  row.textContent=(advisory?'Наблюдение · ':'')+label+' — '+region+(t.locality&&t.locality!==region?' · '+t.locality:'')+' · '+(stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время неизвестно')+(t.areaOnly===true?' · точка неизвестна':'');
+  const quality=t.positionQuality==='approx'||t.presumptiveCourse===true?' · приблизительная позиция':(t.positionQuality==='confirmed'?' · подтверждённая позиция':'');\n  const sources=Number.isFinite(Number(t.sourceCount))&&Number(t.sourceCount)>0?' · источников: '+Number(t.sourceCount):'';\n  const group=Number.isFinite(Number(t.count))&&Number(t.count)>1?' · объектов в группе: '+Number(t.count):'';\n  row.textContent=(advisory?'Наблюдение · ':'')+label+' — '+region+(t.locality&&t.locality!==region?' · '+t.locality:'')+quality+sources+group+' · '+(stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время неизвестно')+(t.areaOnly===true?' · точка неизвестна':'');
   neptunThreatList.append(row);
  });
  visible.forEach(t=>{
   const advisory=t.advisory===true,lat=Number(t.lat),lon=Number(t.lon);
   const marker=L.circleMarker([lat,lon],{radius:advisory?7:9,color:advisory?'#aeb8c5':'#ffb34d',weight:2,fillColor:advisory?'#8795a8':'#e34b4b',fillOpacity:.9});
-  const details=[ '<b>'+escapeHtml(threatLabel(t))+'</b>',escapeHtml(t.region||''),escapeHtml(t.locality||t.district||''),advisory?'Наблюдение, не сигнал укрытия':'Активная отметка NEPTUN',t.heading!=null?'Курс по данным источника: '+escapeHtml(String(t.heading))+'°':'Курс не указан',t.confidenceLevel?'Достоверность источника: '+escapeHtml(t.confidenceLevel):'',t.uncertaintyKm!=null?'Неопределённость позиции: ±'+escapeHtml(String(t.uncertaintyKm))+' км':'',t.updatedAt?'Обновлено: '+escapeHtml(new Date(timeOf(t.updatedAt)).toLocaleTimeString('ru-RU')):'' ].filter(Boolean).join('<br>');
+  const details=[ '<b>'+escapeHtml(threatLabel(t))+'</b>',escapeHtml(t.region||''),escapeHtml(t.locality||t.district||''),advisory?'Наблюдение, не сигнал укрытия':'Активная отметка NEPTUN',t.heading!=null?'Курс по данным источника: '+escapeHtml(String(t.heading))+'°'+(t.presumptiveCourse===true?' (предполагаемый)':''):'Курс не указан',t.confidenceLevel?'Уровень уверенности NEPTUN: '+escapeHtml(t.confidenceLevel):'',t.sourceCount!=null?'Число источников: '+escapeHtml(String(t.sourceCount)):'',t.positionQuality==='approx'||t.presumptiveCourse===true?'Позиция приблизительная, не точная координата':(t.positionQuality==='confirmed'?'Позиция отмечена источником как подтверждённая':''),t.uncertaintyKm!=null?'Неопределённость позиции: ±'+escapeHtml(String(t.uncertaintyKm))+' км':'',t.updatedAt?'Обновлено: '+escapeHtml(new Date(timeOf(t.updatedAt)).toLocaleTimeString('ru-RU')):'' ].filter(Boolean).join('<br>');
   marker.bindPopup(details);marker.addTo(neptunThreatLayer);
  });
  if(active.length){
