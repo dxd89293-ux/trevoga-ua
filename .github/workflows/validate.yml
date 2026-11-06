@@ -57,6 +57,9 @@ jobs:
           if (!worker.includes('Date.now() - neptunStamp < 180000')) throw new Error('Worker NEPTUN freshness guard is missing');
           if (!html.includes('const known=!!n&&statusSupported')) throw new Error('NEPTUN is not the primary client alert source');
           if (!worker.includes('states[slug] = nFull || nPart;')) throw new Error('NEPTUN is not the primary push alert source');
+          if (!worker.includes('results[0].status === "fulfilled"')) throw new Error('Primary NEPTUN push state must not depend on auxiliary feed availability');
+          if (worker.includes('results.every(x => x.status === "fulfilled")')) throw new Error('Auxiliary source failure must not block NEPTUN push alerts');
+          if (!html.includes('выделены оранжевым как неподтверждённые')) throw new Error('Unconfirmed alert color explanation is inconsistent');
           if (worker.includes('tryvohaFresh')) throw new Error('Auxiliary Tryvoha freshness must not block primary push state');
           if (!html.includes('const confirmedStates=new Map()')) throw new Error('Confirmed alert state memory is missing');
           if (!html.includes("s.active?(s.known?") || !html.includes("#e58a32")) throw new Error('Unconfirmed alert visual state is missing');
