@@ -173,31 +173,30 @@ async function checkAndNotify(env) {
 
   if (states) {
     const baseline = await env.SUBSCRIPTIONS.get("state:baseline");
-    if (!baseline) {
-      await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
-    } else {
-      let previous;
-      try { previous = JSON.parse(baseline); } catch { previous = null; }
-      if (!previous) {
-        await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
-      } else {
-        const pending = [];
-        for (const [slug, active] of Object.entries(states)) {
-          if (typeof active !== "boolean" || typeof previous[slug] !== "boolean" || previous[slug] === active) continue;
-          const event = { id: "trevoga-" + slug + "-" + (active ? "on" : "off") + "-" + Date.now(), slug, region: REGIONS[slug], active, timestamp: Date.now() };
-          await appendHistory(env, event);
-          pending.push(event);
-        }
-        if (pending.length) {
-          let queued = [];
-          try { queued = JSON.parse(await env.SUBSCRIPTIONS.get("push:pending") || "[]"); } catch { queued = []; }
-          if (!Array.isArray(queued)) queued = [];
-          await env.SUBSCRIPTIONS.put("push:pending", JSON.stringify([...queued, ...pending].slice(-100)));
-        }
-        // Save the new baseline only after transitions have been persisted to history/outbox.
-        await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(states));
+    let previous;
+    try { previous = baseline ? JSON.parse(baseline) : null; } catch { previous = null; }
+    if (!previous || typeof previous !== "object" || Array.isArray(previous)) previous = {};
+    const nextBaseline = { ...previous };
+    const pending = [];
+    for (const [slug, active] of Object.entries(states)) {
+      // Unknown/conflicting data must not erase the last confirmed state.
+      if (typeof active !== "boolean") continue;
+      if (typeof previous[slug] === "boolean" && previous[slug] !== active) {
+        const event = { id: "trevoga-" + slug + "-" + (active ? "on" : "off") + "-" + Date.now(), slug, region: REGIONS[slug], active, timestamp: Date.now() };
+        await appendHistory(env, event);
+        pending.push(event);
       }
+      // A region without an earlier baseline is initialized silently.
+      nextBaseline[slug] = active;
     }
+    if (pending.length) {
+      let queued = [];
+      try { queued = JSON.parse(await env.SUBSCRIPTIONS.get("push:pending") || "[]"); } catch { queued = []; }
+      if (!Array.isArray(queued)) queued = [];
+      await env.SUBSCRIPTIONS.put("push:pending", JSON.stringify([...queued, ...pending].slice(-100)));
+    }
+    // Persist only confirmed booleans; outages/conflicts cannot wipe the baseline.
+    await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(nextBaseline));
   }
   if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT) {
     await deliverPending(env);
