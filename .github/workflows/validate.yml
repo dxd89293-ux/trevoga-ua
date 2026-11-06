@@ -46,6 +46,7 @@ jobs:
           }
           if (!html.includes("window.TREVOGA_PUSH_API")) throw new Error('Push API config not referenced by app');
           if (!html.includes("Данные NEPTUN устарели более чем на 3 минуты")) throw new Error('Stale NEPTUN threat cleanup is missing');
+          if (!html.includes("now-neptunLastRetryAt>60000") || !html.includes("neptunRealtimeClient.retry()")) throw new Error('NEPTUN stream recovery watchdog is missing');
           if (!html.includes("t.advisory===true")) throw new Error('NEPTUN advisory handling is missing');
           if (!html.includes("t.areaOnly!==true")) throw new Error('Area-only NEPTUN records must not become point markers');
           const sw = fs.readFileSync('sw.js', 'utf8');
