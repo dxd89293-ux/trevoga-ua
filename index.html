@@ -429,8 +429,10 @@ updateRegionLabelVisibility();
 
 function styleOf(s){return {color:s.partial?'#aebbc9':'#9fb0c8',weight:s.partial?1.8:1.05,dashArray:s.partial?'5 4':null,fillColor:s.color,fillOpacity:.92};}
 function labelOf(s){
- if(s&&s.conflict)return 'РАСХОЖДЕНИЕ ИСТОЧНИКОВ';
- if(!s||!s.known)return 'НЕТ ДАННЫХ';
+ if(s&&s.conflict)return s.active?'СИГНАЛ ТРЕВОГИ · ИСТОЧНИКИ РАСХОДЯТСЯ':'РАСХОЖДЕНИЕ ИСТОЧНИКОВ';
+ if(!s)return 'НЕТ ДАННЫХ';
+ if(s.active&&!s.known)return 'СИГНАЛ ТРЕВОГИ · НЕТ ПОДТВЕРЖДЕНИЯ';
+ if(!s.known)return 'НЕТ ДАННЫХ';
  if(!s.active)return 'НЕТ ТРЕВОГИ';
  const part=s.partial?' · ЧАСТИЧНО':'';
  if(s.level==='yellow')return 'ЖЁЛТЫЙ УРОВЕНЬ'+part;
@@ -443,7 +445,7 @@ function applyState(name,s){
  s.startedAt=getStartTime(s.items||[]);
  const previous=states.get(key);
  if(!firstRefresh&&previous&&previous.known&&s.known&&previous.active!==s.active){recordLocalEvent(name,s.active);notifyChange(name,s,s.active);}
- s.color=s.conflict?'#8995a5':(!s.known?'#344c70':(!s.active?'#43a66b':(s.level==='yellow'?'#e8bd35':'#ed343b')));
+ s.color=s.active?(s.level==='yellow'?'#e8bd35':'#ed343b'):(s.conflict?'#8995a5':(!s.known?'#344c70':'#43a66b'));
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
  if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';const d=el.parentElement.querySelector('.duration');if(d)d.textContent=s.active?formatDuration(s.startedAt):'';}
@@ -512,9 +514,10 @@ async function refresh(){
  data.out.forEach(([name,state])=>applyState(name,state));
  firstRefresh=false;
  const vals=data.out.map(x=>x[1]);
- const red=vals.filter(s=>s.known&&s.active&&s.level==='red').length;
- const yellow=vals.filter(s=>s.known&&s.active&&s.level==='yellow').length;
- const activeUnknown=vals.filter(s=>s.known&&s.active&&s.level!=='red'&&s.level!=='yellow').length;
+ const red=vals.filter(s=>s.active&&s.level==='red').length;
+ const yellow=vals.filter(s=>s.active&&s.level==='yellow').length;
+ const activeUnknown=vals.filter(s=>s.active&&s.level!=='red'&&s.level!=='yellow').length;
+ const unconfirmed=vals.filter(s=>s.active&&!s.known).length;
  const clear=vals.filter(s=>s.known&&!s.active).length;
  const conflicts=vals.filter(s=>s.conflict).length;
  const unknown=vals.length-red-yellow-activeUnknown-clear;
@@ -522,7 +525,7 @@ async function refresh(){
  document.getElementById('countYellow').textContent=yellow;
  document.getElementById('countClear').textContent=clear;
  document.getElementById('countUnknown').textContent=unknown;
- document.getElementById('summaryText').textContent=conflicts?'Расхождение источников по регионам: '+conflicts+'. Такие регионы не считаются подтверждённой тревогой или отбоем.':(activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':(unknown?'Подтверждённых активных тревог нет; нет данных по '+unknown+' регионам.':'Подтверждённые активные тревоги не обнаружены.')));
+ document.getElementById('summaryText').textContent=unconfirmed?'Есть сигналы тревоги без подтверждения двумя источниками: '+unconfirmed+'. Они показаны красным/жёлтым, но уведомления по ним не отправляются.':(conflicts?'Расхождение источников по регионам: '+conflicts+'. Проверьте сообщения источников.':(activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':(unknown?'Подтверждённых активных тревог нет; нет данных по '+unknown+' регионам.':'Подтверждённые активные тревоги не обнаружены.'))));
  connection.textContent=n&&data.tFresh?'Оба источника отвечают':(n||data.tFresh?'Доступен только один источник':'Нет связи с источниками');
  const sourceTime=value=>{const stamp=timeOf(value);return stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время обновления в ответе не указано';};
  sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
