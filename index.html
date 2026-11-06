@@ -474,7 +474,7 @@ async function refresh(){
  try{r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);}catch(e){refreshInProgress=false;return;}
  const nCandidate=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
  const tCandidate=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)?r[1].value:null;
- const fresh=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return !stamp||(Date.now()-stamp>=-30000&&Date.now()-stamp<180000);};
+ const fresh=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;};
  const n=nCandidate&&fresh(nCandidate)?nCandidate:null;
  const tStamp=tCandidate&&(tCandidate.updated_at||tCandidate.updatedAt||tCandidate.timestamp);
  const t=tCandidate&&timeOf(tStamp)>0&&fresh(tCandidate)?tCandidate:null;
