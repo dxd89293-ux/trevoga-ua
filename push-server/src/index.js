@@ -207,7 +207,10 @@ async function checkAndNotify(env) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const allowed = origin === env.ALLOWED_ORIGIN;
+    // The app is published on Render and GitHub Pages; allow only these exact configured origins.
+    const allowedOrigins = String(env.ALLOWED_ORIGINS || env.ALLOWED_ORIGIN || "")
+      .split(",").map(value => value.trim()).filter(Boolean);
+    const allowed = allowedOrigins.includes(origin);
     const cors = allowed ? corsHeaders(origin) : {};
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (origin && !allowed) return json({ error: "Origin not allowed" }, 403);
