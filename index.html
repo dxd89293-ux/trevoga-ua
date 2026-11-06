@@ -187,7 +187,7 @@ const soundToggle=document.getElementById('soundToggle'),vibrationToggle=documen
 let soundEnabled=localStorage.getItem('soundEnabled')!=='false',vibrationEnabled=localStorage.getItem('vibrationEnabled')!=='false',browserNotifyEnabled=localStorage.getItem('browserNotifyEnabled')!=='false';
 soundToggle.checked=soundEnabled;vibrationToggle.checked=vibrationEnabled;browserToggle.checked=browserNotifyEnabled;
 soundToggle.addEventListener('change',()=>{soundEnabled=soundToggle.checked;localStorage.setItem('soundEnabled',String(soundEnabled));});
-vibrationToggle.addEventListener('change',()=>{vibrationEnabled=vibrationToggle.checked;localStorage.setItem('vibrationEnabled',String(vibrationEnabled));});
+vibrationToggle.addEventListener('change',()=>{vibrationEnabled=vibrationToggle.checked;localStorage.setItem('vibrationEnabled',String(vibrationEnabled));syncPushPreferences();});
 browserToggle.addEventListener('change',async()=>{browserNotifyEnabled=browserToggle.checked;localStorage.setItem('browserNotifyEnabled',String(browserNotifyEnabled));if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}});
 let alertsEnabled=localStorage.getItem('alertsEnabled')==='true';
 let firstRefresh=true,audioContext=null;
@@ -247,7 +247,7 @@ function notifyChange(name,s,started){
  if(soundEnabled)beep(started?[.32,.32,.32]:[.16,.16]);
  if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='granted'){
   const title=started?'Воздушная тревога':'Отбой тревоги';
-  const body=name+(started?' — зафиксирована тревога по данным источников.':' — тревога больше не отображается источниками.');
+  const body=name+(started?' — подтверждена главным источником NEPTUN.':' — NEPTUN больше не показывает тревогу.');
   if('serviceWorker'in navigator)navigator.serviceWorker.ready.then(reg=>reg.showNotification(title,{body,icon:'./icon.svg',tag:'alert-'+slugOf(name),renotify:false,data:{url:'./'}})).catch(()=>{});
   else try{new Notification(title,{body,icon:'./icon.svg',tag:'alert-'+slugOf(name),renotify:false});}catch(e){}
  }
@@ -303,7 +303,7 @@ pushButton.addEventListener('click',async()=>{
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeVapidKey(pushPublicKey)});
   pushSubscription=sub;
-  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...sub.toJSON(),regions:[...selectedRegions]})});
+  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...sub.toJSON(),regions:[...selectedRegions],vibration:vibrationEnabled})});
   if(!response.ok)throw Error('Сервер не принял подписку.');
   disablePushButton.style.display='inline-block';
   pushSettings.textContent='Push подключён. Сервер сможет присылать уведомления при закрытом сайте, если браузер и телефон разрешают фоновые уведомления.';
@@ -362,7 +362,7 @@ function saveRegionSelection(){
 }
 function syncPushPreferences(){
  if(!pushApi||!pushSubscription)return;
- fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...pushSubscription.toJSON(),regions:[...selectedRegions]})})
+ fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...pushSubscription.toJSON(),regions:[...selectedRegions],vibration:vibrationEnabled})})
  .then(r=>{if(!r.ok)throw Error('HTTP '+r.status);pushSettings.textContent='Push-настройки регионов обновлены.';})
  .catch(()=>{pushSettings.textContent='Не удалось обновить фильтр push. Возможно, Worker ещё не обновлён.';});
 }
