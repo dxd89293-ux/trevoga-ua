@@ -76,7 +76,7 @@ const baseTiles=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/service
 const neptunThreatLayer=L.layerGroup().addTo(map);
 const neptunThreatSummary=document.getElementById('neptunThreatSummary');
 const neptunThreatList=document.getElementById('neptunThreatList');
-let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0,neptunSdkLoading=false;
+let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0,neptunSdkLoading=false,neptunLastRetryAt=0;
 const threatNames={uav:'БПЛА',recon:'Разведывательный БПЛА',missile:'Ракета',ballistic:'Баллистическая ракета',kab:'КАБ',mig31k:'МиГ-31К',fpv:'FPV-дрон',unknown:'Неизвестный тип'};
 function threatFresh(t){const stamp=timeOf(t.updatedAt);return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;}
 function threatLabel(t){return t.title||threatNames[t.type]||'Воздушная угроза';}
@@ -135,7 +135,8 @@ function startNeptunThreatStream(){
 }
 startNeptunThreatStream();
 setInterval(()=>{
- if(neptunLastSnapshotAt&&Date.now()-neptunLastSnapshotAt>180000){
+ const now=Date.now();
+ if(neptunLastSnapshotAt&&now-neptunLastSnapshotAt>180000){
   neptunThreatLayer.clearLayers();
   neptunThreatList.replaceChildren();
   const stale=document.createElement('small');
@@ -143,6 +144,17 @@ setInterval(()=>{
   neptunThreatList.append(stale);
   neptunThreatSummary.textContent='Данные NEPTUN устарели. Старые отметки и записи скрыты до получения свежего снимка.';
   neptunLastSnapshotAt=0;
+ }
+ if(!neptunRealtimeClient){
+  if(!neptunSdkLoading)startNeptunThreatStream();
+  return;
+ }
+ if((!neptunLastSnapshotAt||now-neptunLastSnapshotAt>180000)&&now-neptunLastRetryAt>60000&&typeof neptunRealtimeClient.retry==='function'){
+  neptunLastRetryAt=now;
+  try{
+   const retryResult=neptunRealtimeClient.retry();
+   if(retryResult&&typeof retryResult.catch==='function')retryResult.catch(e=>console.warn('NEPTUN retry failed',e));
+  }catch(e){console.warn('NEPTUN retry failed',e);}
  }
 },15000);
 const satelliteLabels=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,opacity:.88,attribution:'© OpenStreetMap contributors'}).addTo(map);
