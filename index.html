@@ -137,7 +137,12 @@ startNeptunThreatStream();
 setInterval(()=>{
  if(neptunLastSnapshotAt&&Date.now()-neptunLastSnapshotAt>180000){
   neptunThreatLayer.clearLayers();
-  neptunThreatSummary.textContent='Данные NEPTUN устарели. Старые отметки скрыты до получения свежего снимка.';
+  neptunThreatList.replaceChildren();
+  const stale=document.createElement('small');
+  stale.textContent='Данные NEPTUN устарели более чем на 3 минуты. Старые записи и отметки скрыты до получения свежего снимка.';
+  neptunThreatList.append(stale);
+  neptunThreatSummary.textContent='Данные NEPTUN устарели. Старые отметки и записи скрыты до получения свежего снимка.';
+  neptunLastSnapshotAt=0;
  }
 },15000);
 const satelliteLabels=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,opacity:.88,attribution:'© OpenStreetMap contributors'}).addTo(map);
