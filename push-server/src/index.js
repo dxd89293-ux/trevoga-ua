@@ -90,11 +90,12 @@ async function allSubscriptions(env) {
         try {
           const parsed = JSON.parse(value);
           const wrapped = parsed && parsed.subscription;
-          const { regions: savedRegions, ...legacySubscription } = parsed || {};
+          const { regions: savedRegions, vibration: savedVibration, subscription: ignoredWrapped, ...legacySubscription } = parsed || {};
           result.push({
             key: item.name,
-            subscription: wrapped ? parsed.subscription : legacySubscription,
-            regions: Array.isArray(savedRegions) ? savedRegions : null
+            subscription: wrapped || legacySubscription,
+            regions: Array.isArray(savedRegions) ? savedRegions : null,
+            vibration: typeof savedVibration === "boolean" ? savedVibration : true
           });
         } catch { await env.SUBSCRIPTIONS.delete(item.name); }
       }
@@ -114,7 +115,8 @@ async function sendToAll(env, payload, regionSlug) {
   for (const item of subs) {
     if (Array.isArray(item.regions) && !item.regions.includes(regionSlug)) continue;
     try {
-      const delivered = await sendPushNotification(item.subscription, payload, vapid);
+      const devicePayload = { ...payload, vibrate: item.vibration ? payload.vibrate : [] };
+      const delivered = await sendPushNotification(item.subscription, devicePayload, vapid);
       if (!delivered) await env.SUBSCRIPTIONS.delete(item.key);
     } catch (error) {
       // Expired browser subscriptions should be removed; transient failures stay in the outbox.
