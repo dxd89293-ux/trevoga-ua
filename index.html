@@ -56,7 +56,7 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <div class="map-overlay map-live"><i class="live-dot"></i><span id="mapLiveText">Ожидаем обновление</span><span aria-hidden="true">↻</span></div>
 <div class="map-overlay map-legend"><span><i style="background:#ed343b"></i>Красный уровень</span><span><i style="background:#e8bd35"></i>Жёлтый уровень</span><span><i style="background:#43a66b"></i>Подтверждено без тревоги</span><span><i style="background:#e58a32"></i>Сигнал без подтверждения</span><span><i style="background:#8995a5"></i>Нет данных / расхождение</span></div>
 <div class="map-overlay map-actions"><button type="button" id="mapZoomIn" aria-label="Увеличить">+</button><button type="button" id="mapZoomOut" aria-label="Уменьшить">−</button><button type="button" id="mapLocate" aria-label="Показать всю Украину">◎</button></div></div>
-<div id="neptun-threats-status" class="source-item" style="margin-top:10px"><b>Угрозы NEPTUN</b><span id="neptunThreatSummary">Подключаем поток угроз…</span><div id="neptunThreatList" style="display:grid;gap:5px;margin-top:7px"></div><small style="display:block;margin-top:7px">Информационные данные NEPTUN, не заменяют официальные сигналы тревоги. <a href="https://neptun.in.ua/" target="_blank" rel="noopener">Данные: Карта повітряних загроз — NEPTUN</a></small></div><div class="legend">
+<div id="neptun-threats-status" class="source-item" style="margin-top:10px"><b>Угрозы NEPTUN</b><span id="neptunThreatSummary">Подключаем поток угроз…</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px"><label for="neptunThreatType" style="font-size:12px;color:#c4ccd6">Тип угрозы</label><select id="neptunThreatType" aria-label="Фильтр по типу угрозы" style="background:#111923;color:#f2f3f4;border:1px solid #465568;border-radius:8px;padding:7px;max-width:100%"><option value="all">Все типы</option></select><label style="display:flex;gap:6px;align-items:center;font-size:12px;color:#c4ccd6"><input id="neptunShowAdvisory" type="checkbox" checked> Показывать наблюдения</label></div><div id="neptunThreatList" style="display:grid;gap:5px;margin-top:7px"></div><small style="display:block;margin-top:7px">Информационные данные NEPTUN, не заменяют официальные сигналы тревоги. <a href="https://neptun.in.ua/" target="_blank" rel="noopener">Данные: Карта повітряних загроз — NEPTUN</a></small></div><div class="legend">
 <span><i class="dot" style="background:#a5221d;border-color:#c16b66"></i> Красный уровень</span><span><i class="dot" style="background:#a8791d;border-color:#d1ad62"></i> Жёлтый уровень</span><span><i class="dot" style="background:#285b43;border-color:#6b9a7e"></i> Подтверждено без тревоги</span><span><i class="dot" style="background:#e58a32;border-color:#f0b36e"></i> Сигнал без подтверждения</span><span><i class="dot" style="background:#555d65;border-color:#9299a0"></i> Нет данных / расхождение</span>
 </div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Настройки уведомлений</h2><p>Выбери способ оповещения и области, по которым нужны звук, уведомления и push. По умолчанию выбраны все регионы.</p>
@@ -77,14 +77,26 @@ const neptunThreatLayer=L.layerGroup().addTo(map);
 const neptunThreatSummary=document.getElementById('neptunThreatSummary');
 const neptunThreatList=document.getElementById('neptunThreatList');
 let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0,neptunSdkLoading=false,neptunLastRetryAt=0;
+let neptunThreatSnapshot=null,neptunThreatRecords=[];
+const neptunThreatTypeSelect=document.getElementById('neptunThreatType');
+const neptunShowAdvisory=document.getElementById('neptunShowAdvisory');
 const threatNames={uav:'БПЛА',recon:'Разведывательный БПЛА',missile:'Ракета',ballistic:'Баллистическая ракета',kab:'КАБ',mig31k:'МиГ-31К',fpv:'FPV-дрон',unknown:'Неизвестный тип'};
 function threatFresh(t){const stamp=timeOf(t.updatedAt);return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;}
 function threatLabel(t){return t.title||threatNames[t.type]||'Воздушная угроза';}
 function renderNeptunThreats(snapshot){
+ neptunThreatSnapshot=snapshot;
  const all=Array.isArray(snapshot&&snapshot.threats)?snapshot.threats:[];
  neptunLastSnapshotAt=Date.now();
  neptunThreatLayer.clearLayers();neptunThreatList.replaceChildren();
- const active=all.filter(t=>t&&t.status==='active'&&threatFresh(t));
+ const freshActive=all.filter(t=>t&&t.status==='active'&&threatFresh(t));
+ const availableTypes=[...new Set(freshActive.map(t=>String(t.type||'unknown'))) ].sort();
+ const selectedType=neptunThreatTypeSelect.value;
+ neptunThreatTypeSelect.replaceChildren();
+ const allOption=document.createElement('option');allOption.value='all';allOption.textContent='Все типы';neptunThreatTypeSelect.append(allOption);
+ availableTypes.forEach(type=>{const option=document.createElement('option');option.value=type;option.textContent=threatNames[type]||type;neptunThreatTypeSelect.append(option);});
+ neptunThreatTypeSelect.value=availableTypes.includes(selectedType)?selectedType:'all';
+ const active=freshActive.filter(t=>(neptunThreatTypeSelect.value==='all'||String(t.type||'unknown')===neptunThreatTypeSelect.value)&&(neptunShowAdvisory.checked||t.advisory!==true));
+ neptunThreatRecords=active;
  const visible=active.filter(t=>t.areaOnly!==true&&Number.isFinite(Number(t.lat))&&Number.isFinite(Number(t.lon))&&Number(t.lat)>=43&&Number(t.lat)<=53&&Number(t.lon)>=21&&Number(t.lon)<=41);
  const areaOnly=active.filter(t=>t.areaOnly===true);
  active.forEach(t=>{
@@ -108,8 +120,10 @@ function renderNeptunThreats(snapshot){
  }else{
   neptunThreatSummary.textContent='Активных подтверждённых записей в последнем свежем снимке нет. Это не означает отсутствия опасности.';
  }
- if(!active.length){const empty=document.createElement('small');empty.textContent='Сейчас нет активных записей угроз в свежем снимке NEPTUN.';neptunThreatList.append(empty);}
+ if(!active.length){const empty=document.createElement('small');empty.textContent=freshActive.length?'Нет записей по выбранным фильтрам.':'Сейчас нет активных записей угроз в свежем снимке NEPTUN.';neptunThreatList.append(empty);}
 }
+neptunThreatTypeSelect.addEventListener('change',()=>{if(neptunThreatSnapshot)renderNeptunThreats(neptunThreatSnapshot);});
+neptunShowAdvisory.addEventListener('change',()=>{if(neptunThreatSnapshot)renderNeptunThreats(neptunThreatSnapshot);});
 function startNeptunThreatStream(){
  if(neptunRealtimeClient)return;
  if(!window.NEPTUN||typeof window.NEPTUN.RealtimeClient!=='function'){
