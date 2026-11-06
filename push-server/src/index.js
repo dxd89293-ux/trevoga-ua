@@ -148,7 +148,7 @@ async function deliverPending(env) {
   for (const item of pending.slice(0, 100)) {
     const sent = await sendToAll(env, {
       title: item.active ? "Повітряна тривога" : "Відбій повітряної тривоги",
-      body: item.region + (item.active ? " — джерела зафіксували тривогу." : " — джерела більше не показують тривогу."),
+      body: item.region + (item.active ? " — NEPTUN сообщил о тревоге." : " — NEPTUN больше не показывает тревогу."),
       url: "/",
       tag: item.id,
       vibrate: item.active ? [300, 150, 300] : [120, 80, 120]
