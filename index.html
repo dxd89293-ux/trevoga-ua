@@ -493,7 +493,6 @@ function calculate(n,t){
   const partial=(nPart||tPart)&&!(nFull||tFull);
   let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
   if(!level&&active)level='unknown';
-  const both=!!n&&tFresh&&statusSupported;
   // NEPTUN — главный источник статуса тревог; Tryvoha используется для дополнительной сверки.
   const known=!!n&&statusSupported;
   const tItems=matches.filter(x=>x.slug===slug||x.oblast_slug===slug);
@@ -530,7 +529,7 @@ async function refresh(){
  document.getElementById('countYellow').textContent=yellow;
  document.getElementById('countClear').textContent=clear;
  document.getElementById('countUnknown').textContent=unknown;
- document.getElementById('summaryText').textContent=unconfirmed?'Есть сигналы тревоги без подтверждения двумя источниками: '+unconfirmed+'. Они показаны красным/жёлтым, но уведомления по ним не отправляются.':(conflicts?'Расхождение источников по регионам: '+conflicts+'. Проверьте сообщения источников.':(activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':(unknown?'Подтверждённых активных тревог нет; нет данных по '+unknown+' регионам.':'Подтверждённые активные тревоги не обнаружены.'))));
+ document.getElementById('summaryText').textContent=unconfirmed?'Есть сигналы тревоги Tryvoha без подтверждения главным источником NEPTUN: '+unconfirmed+'. Они показаны красным/жёлтым, но уведомления по ним не отправляются.':(conflicts?'Расхождение источников по регионам: '+conflicts+'. Проверьте сообщения источников.':(activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':(unknown?'Подтверждённых активных тревог нет; нет данных по '+unknown+' регионам.':'Подтверждённые активные тревоги не обнаружены.'))));
  connection.textContent=n?(data.tFresh?'Главный источник NEPTUN работает · сверка доступна':'Главный источник NEPTUN работает · дополнительная сверка недоступна'):(data.tFresh?'NEPTUN недоступен · есть только дополнительный источник':'Нет связи с источниками');
  const sourceTime=value=>{const stamp=timeOf(value);return stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время обновления в ответе не указано';};
  sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
