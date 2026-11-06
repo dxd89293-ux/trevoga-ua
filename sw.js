@@ -35,6 +35,7 @@ self.addEventListener('push',event=>{
     badge:'./icon.svg',
     tag:data.tag||'trevoga-ua-alert',
     renotify:false,
+    vibrate:Array.isArray(data.vibrate)?data.vibrate:[300,150,300],
     data:{url:data.url||'./'}
   };
   event.waitUntil(self.registration.showNotification(title,options));
