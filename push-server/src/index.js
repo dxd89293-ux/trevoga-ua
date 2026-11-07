@@ -240,8 +240,10 @@ async function checkAndNotify(env) {
     const threats = freshThreatRecords(results[2].value);
     if (threats) {
       const now = Date.now();
+      const savedSeen = await env.SUBSCRIPTIONS.get("threat:seen");
+      const hasThreatBaseline = savedSeen !== null;
       let seen = {};
-      try { seen = JSON.parse(await env.SUBSCRIPTIONS.get("threat:seen") || "{}"); } catch { seen = {}; }
+      try { seen = savedSeen ? JSON.parse(savedSeen) : {}; } catch { seen = {}; }
       if (!seen || typeof seen !== "object" || Array.isArray(seen)) seen = {};
       for (const [id, at] of Object.entries(seen)) {
         if (!Number.isFinite(Number(at)) || now - Number(at) > 30 * 60 * 1000) delete seen[id];
@@ -254,6 +256,8 @@ async function checkAndNotify(env) {
         const slug = regionSlugFor(threat.region);
         if (!id || !slug || seen[id]) continue;
         seen[id] = now;
+        // The first successful threat snapshot establishes a silent baseline.
+        if (!hasThreatBaseline) continue;
         queued.push({
           kind: "threat",
           id: "neptun-threat-" + id,
