@@ -161,21 +161,45 @@ async function deliverPending(env) {
   if (!Array.isArray(pending) || !pending.length) return;
   const retry = [];
   for (const item of pending.slice(0, 100)) {
+    const isThreat = item.kind === "threat";
     const sent = await sendToAll(env, {
-      title: item.active ? "Повітряна тривога" : "Відбій повітряної тривоги",
-      body: item.region + (item.active ? " — NEPTUN сообщил о тревоге." : " — NEPTUN больше не показывает тревогу."),
+      title: isThreat
+        ? (item.type === "ballistic" ? "Угроза баллистики · NEPTUN" : "Угроза БПЛА · NEPTUN")
+        : (item.active ? "Повітряна тривога" : "Відбій повітряної тривоги"),
+      body: isThreat
+        ? (item.region + " — " + (item.label || (item.type === "ballistic" ? "Баллистическая угроза" : "БПЛА")) + ". Новый сигнал NEPTUN.")
+        : item.region + (item.active ? " — NEPTUN сообщил о тревоге." : " — NEPTUN больше не показывает тревогу."),
       url: "/",
       tag: item.id,
-      vibrate: item.active ? [300, 150, 300] : [120, 80, 120]
+      vibrate: isThreat || item.active ? [300, 150, 300] : [120, 80, 120]
     }, item.slug);
     if (!sent) retry.push(item);
   }
   await env.SUBSCRIPTIONS.put("push:pending", JSON.stringify(retry));
 }
+function regionSlugFor(value) {
+  const candidate = norm(value);
+  for (const [slug, name] of Object.entries(REGIONS)) {
+    if (candidate === norm(name) || candidate === norm(slug)) return slug;
+  }
+  return null;
+}
+function freshThreatRecords(payload) {
+  const rows = Array.isArray(payload?.threats) ? payload.threats : null;
+  if (!rows) return null;
+  const now = Date.now();
+  return rows.filter(item => {
+    if (!item || item.status !== "active" || item.advisory === true) return false;
+    if (item.type !== "ballistic" && item.type !== "uav") return false;
+    const stamp = timestampOf(item.updatedAt);
+    return stamp > 0 && now - stamp >= -30000 && now - stamp < 180000;
+  });
+}
 async function checkAndNotify(env) {
   const results = await Promise.allSettled([
     fetchJson("https://neptun.in.ua/api/v1/alerts"),
-    fetchJson("https://tryvoha.online/api/v1/alerts")
+    fetchJson("https://tryvoha.online/api/v1/alerts"),
+    fetchJson("https://neptun.in.ua/api/v1/threats")
   ]);
   // Only the primary NEPTUN response is required for confirmed alert state.
   // Tryvoha is an optional cross-check and must never block primary notifications.
@@ -209,6 +233,40 @@ async function checkAndNotify(env) {
     }
     // Persist only confirmed booleans; outages/conflicts cannot wipe the baseline.
     await env.SUBSCRIPTIONS.put("state:baseline", JSON.stringify(nextBaseline));
+  }
+  // Threat pushes are based only on fresh, active, non-advisory NEPTUN records.
+  // Keep a short seen-ID window so repeated snapshots do not send duplicate alerts.
+  if (results[2].status === "fulfilled") {
+    const threats = freshThreatRecords(results[2].value);
+    if (threats) {
+      const now = Date.now();
+      let seen = {};
+      try { seen = JSON.parse(await env.SUBSCRIPTIONS.get("threat:seen") || "{}"); } catch { seen = {}; }
+      if (!seen || typeof seen !== "object" || Array.isArray(seen)) seen = {};
+      for (const [id, at] of Object.entries(seen)) {
+        if (!Number.isFinite(Number(at)) || now - Number(at) > 30 * 60 * 1000) delete seen[id];
+      }
+      let queued = [];
+      try { queued = JSON.parse(await env.SUBSCRIPTIONS.get("push:pending") || "[]"); } catch { queued = []; }
+      if (!Array.isArray(queued)) queued = [];
+      for (const threat of threats) {
+        const id = String(threat.id || "");
+        const slug = regionSlugFor(threat.region);
+        if (!id || !slug || seen[id]) continue;
+        seen[id] = now;
+        queued.push({
+          kind: "threat",
+          id: "neptun-threat-" + id,
+          slug,
+          region: REGIONS[slug],
+          type: threat.type,
+          label: String(threat.title || (threat.type === "ballistic" ? "Баллистическая угроза" : "БПЛА")).slice(0, 180),
+          timestamp: now
+        });
+      }
+      await env.SUBSCRIPTIONS.put("threat:seen", JSON.stringify(seen));
+      if (queued.length) await env.SUBSCRIPTIONS.put("push:pending", JSON.stringify(queued.slice(-100)));
+    }
   }
   if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT) {
     await deliverPending(env);
