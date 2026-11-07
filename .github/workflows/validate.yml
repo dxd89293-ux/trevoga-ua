@@ -78,6 +78,7 @@ jobs:
           if (!worker.includes('item.advisory === true')) throw new Error('Background threat notifications must exclude advisory observations');
           if (!worker.includes('item.type !== "ballistic" && item.type !== "uav"')) throw new Error('Background threat notifications must classify ballistic and UAV signals only');
           if (!worker.includes('kind: "threat"') || !worker.includes('threat:seen')) throw new Error('Background threat notifications must deduplicate active threat IDs');
+          if (!worker.includes('const hasThreatBaseline = savedSeen !== null') || !worker.includes('if (!hasThreatBaseline) continue;')) throw new Error('First background threat snapshot must initialize silently');
           if (!worker.includes('item.type === "ballistic" ? "Угроза баллистики · NEPTUN"')) throw new Error('Background threat notification titles must identify ballistic threats');
           if (!worker.includes('function regionSlugFor(value)')) throw new Error('Background threat notifications must respect selected region subscriptions');
           if (!worker.includes('Unknown/conflicting data must not erase the last confirmed state.')) throw new Error('Worker confirmed baseline retention is missing');
