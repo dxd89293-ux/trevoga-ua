@@ -511,15 +511,17 @@ function calculate(n,t){
   const tPart=matches.some(x=>x.type==='district');
   const statusSupported=!!slug&&slug!=='crimea'&&slug!=='sevastopol';
   const nActive=nFull||nPart,tActive=tFull||tPart;
-  // При доступном NEPTUN статус определяет он; Tryvoha не может переопределить главный источник.
-  const active=n?nActive:tActive;
+  const threatLevel=threatLevelForRegion(name),threatActive=!!threatLevel;
+  // Поток угроз NEPTUN тоже подтверждает тип и наличие угрозы, даже если региональный список тревог ещё не обновился.
+  // Tryvoha не может переопределить основной источник.
+  const active=n?(nActive||threatActive):tActive;
   // Сравниваем только два доступных источника; недоступный источник не считается расхождением.
   const conflict=!!n&&tFresh&&statusSupported&&nActive!==tActive;
   const partial=n?(nPart&&!nFull):(tFresh&&tPart&&!tFull);
-  let level=active?threatLevelForRegion(name):null;
+  let level=active?threatLevel:null;
   if(!level&&active)level='unknown';
   // NEPTUN — главный источник статуса тревог; Tryvoha используется для дополнительной сверки.
-  const known=!!n&&statusSupported;
+  const known=(!!n&&statusSupported)||threatActive;
   const tItems=matches.filter(x=>x.slug===slug||x.oblast_slug===slug);
   out.push([name,{known,active,partial,conflict,level,items:[...nFullItems,...nPartItems,...(tFresh?tItems:[])]}]);
  }
