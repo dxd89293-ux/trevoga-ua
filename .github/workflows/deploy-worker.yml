@@ -1,11 +1,7 @@
 name: Deploy Cloudflare push worker
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "push-server/**"
-      - ".github/workflows/deploy-worker.yml"
+  # Production deployment is manual-only until the owner explicitly approves it.
   workflow_dispatch:
 
 permissions:
