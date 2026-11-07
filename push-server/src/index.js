@@ -245,8 +245,10 @@ async function checkAndNotify(env) {
       let seen = {};
       try { seen = savedSeen ? JSON.parse(savedSeen) : {}; } catch { seen = {}; }
       if (!seen || typeof seen !== "object" || Array.isArray(seen)) seen = {};
-      for (const [id, at] of Object.entries(seen)) {
-        if (!Number.isFinite(Number(at)) || now - Number(at) > 30 * 60 * 1000) delete seen[id];
+      const currentThreatIds = new Set(threats.map(item => String(item.id || "")).filter(Boolean));
+      // Keep IDs for the full lifetime of an active record; prune only after it disappears.
+      for (const id of Object.keys(seen)) {
+        if (!currentThreatIds.has(id)) delete seen[id];
       }
       let queued = [];
       try { queued = JSON.parse(await env.SUBSCRIPTIONS.get("push:pending") || "[]"); } catch { queued = []; }
