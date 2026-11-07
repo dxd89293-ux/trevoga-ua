@@ -96,7 +96,7 @@ function renderNeptunThreats(snapshot){
  availableTypes.forEach(type=>{const option=document.createElement('option');option.value=type;option.textContent=threatNames[type]||type;neptunThreatTypeSelect.append(option);});
  neptunThreatTypeSelect.value=availableTypes.includes(selectedType)?selectedType:'all';
  const active=freshActive.filter(t=>(neptunThreatTypeSelect.value==='all'||String(t.type||'unknown')===neptunThreatTypeSelect.value)&&(neptunShowAdvisory.checked||t.advisory!==true));
- neptunThreatRecords=active;
+ neptunThreatRecords=freshActive.filter(t=>t.advisory!==true);
  const visible=active.filter(t=>t.areaOnly!==true&&Number.isFinite(Number(t.lat))&&Number.isFinite(Number(t.lon))&&Number(t.lat)>=43&&Number(t.lat)<=53&&Number(t.lon)>=21&&Number(t.lon)<=41);
  const areaOnly=active.filter(t=>t.areaOnly===true);
  active.forEach(t=>{
@@ -450,9 +450,9 @@ function labelOf(s){
  if(!s.known)return 'НЕТ ДАННЫХ';
  if(!s.active)return 'НЕТ ТРЕВОГИ';
  const part=s.partial?' · ЧАСТИЧНО':'';
- if(s.level==='yellow')return 'ЖЁЛТЫЙ УРОВЕНЬ · TRYVOHA'+part;
- if(s.level==='red')return 'КРАСНЫЙ УРОВЕНЬ · TRYVOHA'+part;
- return 'ТРЕВОГА · УРОВЕНЬ НЕ УТОЧНЁН'+part;
+ if(s.level==='yellow')return 'ЖЁЛТЫЙ · АТАКА БПЛА / ШАХЕДЫ · NEPTUN'+part;
+ if(s.level==='red')return 'КРАСНЫЙ · УГРОЗА БАЛЛИСТИКИ · NEPTUN'+part;
+ return 'ТРЕВОГА · ТИП УГРОЗЫ НЕ УТОЧНЁН'+part;
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function applyState(name,s){
@@ -461,7 +461,7 @@ function applyState(name,s){
  const previous=confirmedStates.get(key);
  if(!firstRefresh&&previous&&s.known&&previous.active!==s.active){recordLocalEvent(name,s.active);notifyChange(name,s,s.active);}
  if(s.known)confirmedStates.set(key,{known:true,active:s.active,level:s.level});
- s.color=s.active?(s.known?(s.level==='yellow'?'#e8bd35':'#ed343b'):'#8995a5'):(s.conflict?'#8995a5':(!s.known?'#344c70':'#43a66b'));
+ s.color=s.active?(s.known&&s.level==='yellow'?'#e8bd35':(s.known&&s.level==='red'?'#ed343b':'#8995a5')):(s.conflict?'#8995a5':(!s.known?'#8995a5':'#43a66b'));
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
  if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';const d=el.parentElement.querySelector('.duration');if(d)d.textContent=s.active?formatDuration(s.startedAt):'';}
@@ -487,6 +487,12 @@ async function getJson(url){
   return {...data,_fetchedAt:Date.now(),_httpDate:Number.isFinite(dateHeader)?dateHeader:null,_cacheAgeMs:Number.isFinite(ageSeconds)&&ageSeconds>=0?ageSeconds*1000:0};
  }finally{clearTimeout(t);}
 }
+function threatLevelForRegion(name){
+ const matches=(neptunThreatRecords||[]).filter(t=>t&&t.status==='active'&&t.advisory!==true&&threatFresh(t)&&norm(t.region)===norm(name));
+ if(matches.some(t=>String(t.type||'').toLowerCase()==='ballistic'))return 'red';
+ if(matches.some(t=>String(t.type||'').toLowerCase()==='uav'))return 'yellow';
+ return null;
+}
 function calculate(n,t){
  const nO=n&&Array.isArray(n.oblasts)?n.oblasts:[],nR=n&&Array.isArray(n.raions)?n.raions:[];
  const tA=t&&Array.isArray(t.alerts)?t.alerts:[];
@@ -509,7 +515,7 @@ function calculate(n,t){
   // Сравниваем только два доступных источника; недоступный источник не считается расхождением.
   const conflict=!!n&&tFresh&&statusSupported&&nActive!==tActive;
   const partial=n?(nPart&&!nFull):(tFresh&&tPart&&!tFull);
-  let level=tFresh&&matches.some(x=>x.level==='red')?'red':(tFresh&&matches.some(x=>x.level==='yellow')?'yellow':null);
+  let level=active?threatLevelForRegion(name):null;
   if(!level&&active)level='unknown';
   // NEPTUN — главный источник статуса тревог; Tryvoha используется для дополнительной сверки.
   const known=!!n&&statusSupported;
