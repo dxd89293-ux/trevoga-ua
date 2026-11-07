@@ -69,7 +69,10 @@ jobs:
           if (!html.includes('нейтральным серым цветом как неподтверждённые')) throw new Error('Unconfirmed alert state must be clearly neutral and unconfirmed');
           if (worker.includes('tryvohaFresh')) throw new Error('Auxiliary Tryvoha freshness must not block primary push state');
           if (!html.includes('const confirmedStates=new Map()')) throw new Error('Confirmed alert state memory is missing');
-          if (!html.includes("s.active?(s.known?") || html.includes("#e58a32") || !html.includes("s.known?'#e8bd35':'#ed343b'")) throw new Error('Orange unconfirmed state or confirmed alert colors are incorrect');
+          if (!html.includes("s.known&&s.level==='red'?'#ed343b'") || !html.includes("s.known&&s.level==='yellow'?'#e8bd35'") || html.includes("#e58a32")) throw new Error('Ballistic red, UAV yellow, or neutral unknown colors are incorrect');
+          if (!html.includes("String(t.type||'').toLowerCase()==='ballistic'")) throw new Error('Ballistic threats must always be red');
+          if (!html.includes("String(t.type||'').toLowerCase()==='uav'")) throw new Error('UAV/Shahed threats must be yellow');
+          if (!html.includes("neptunThreatRecords=freshActive.filter(t=>t.advisory!==true)")) throw new Error('Regional threat colors must not depend on UI filters or advisory observations');
           if (!worker.includes('Unknown/conflicting data must not erase the last confirmed state.')) throw new Error('Worker confirmed baseline retention is missing');
           if (!worker.includes('vibrate: item.active ? [300, 150, 300] : [120, 80, 120]')) throw new Error('Push vibration patterns are missing');
           if (!sw.includes('vibrate:Array.isArray(data.vibrate)')) throw new Error('Background push vibration handler is missing');
