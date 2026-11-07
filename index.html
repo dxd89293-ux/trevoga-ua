@@ -50,15 +50,15 @@ button{border:0;border-radius:10px;padding:10px 13px;background:#315d9b;color:wh
 <body><main>
 <header><img src="icon.svg" alt=""><div><h1>Тревога UA</h1><p>Карта всей Украины · 27 регионов</p></div><span class="tag" style="margin-left:auto">КАРТА</span></header>
 <section class="card"><div class="tag">Подключение к источникам</div><div class="status" id="connection">Источники ещё не подключены</div><p id="updated">Все регионы пока отмечены серым: нет подтверждённых данных.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button id="enableAlerts" type="button">Включить звук и уведомления</button><button id="testSound" type="button" style="background:#42516a">Проверить звук</button><button id="installApp" type="button" style="background:#246b55;display:none">Установить приложение</button><button id="enablePush" type="button" style="background:#5a4a91;display:none">Включить push при закрытом сайте</button><button id="disablePush" type="button" style="background:#42516a;display:none">Отключить push</button></div><p id="pushSettings" style="font-size:12px;margin-top:7px">Push при закрытом сайте пока не настроен: нужен отдельный сервер.</p><p id="alertSettings" style="font-size:12px;margin-top:8px">Оповещения выключены. Для работы звука и разрешения уведомлений нажми кнопку.</p></section>
-<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Сводка по Украине</h2><p id="summaryText">Ожидаем подтверждённые данные по регионам.</p><div class="summary-grid"><div class="summary-item red"><strong id="countRed">—</strong><span>Красный уровень</span></div><div class="summary-item yellow"><strong id="countYellow">—</strong><span>Жёлтый уровень</span></div><div class="summary-item green"><strong id="countClear">—</strong><span>Подтверждено без тревоги</span></div><div class="summary-item gray"><strong id="countUnknown">—</strong><span>Нет данных / расхождение</span></div></div><div class="source-grid"><div class="source-item"><b>NEPTUN · главный источник</b><span id="sourceNeptun">Ожидаем ответ…</span></div><div class="source-item"><b>Tryvoha.online · дополнительная сверка</b><span id="sourceTryvoha">Ожидаем ответ…</span></div></div><p id="lastCheck" style="font-size:11px;margin-top:9px">Последняя проверка: ещё не выполнялась.</p></section>
+<section class="card"><h2 style="font-size:17px;margin:0 0 10px">Сводка по Украине</h2><p id="summaryText">Ожидаем подтверждённые данные по регионам.</p><div class="summary-grid"><div class="summary-item red"><strong id="countRed">—</strong><span>Баллистическая угроза</span></div><div class="summary-item yellow"><strong id="countYellow">—</strong><span>Атака БПЛА / Шахедов</span></div><div class="summary-item green"><strong id="countClear">—</strong><span>Подтверждено без тревоги</span></div><div class="summary-item gray"><strong id="countUnknown">—</strong><span>Нет данных / расхождение</span></div></div><div class="source-grid"><div class="source-item"><b>NEPTUN · главный источник</b><span id="sourceNeptun">Ожидаем ответ…</span></div><div class="source-item"><b>Tryvoha.online · дополнительная сверка</b><span id="sourceTryvoha">Ожидаем ответ…</span></div></div><p style="font-size:11px;color:#aeb5bd">Факт тревоги и отбой определяет NEPTUN. Цвет угрозы определяется типом из потока NEPTUN: баллистика — красный, БПЛА — жёлтый. Tryvoha.online используется только для дополнительной сверки.</p><p id="lastCheck" style="font-size:11px;margin-top:9px">Последняя проверка: ещё не выполнялась.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0 0 10px">Карта воздушных тревог</h2><div class="map-tools"><button type="button" data-map-view="ukraine" class="active">Вся Украина</button><button type="button" data-map-view="regions">Области крупно</button></div><div class="map-stage"><div id="map" role="img" aria-label="Карта административных областей Украины"></div>
 <div class="map-overlay map-head"><span class="shield">🇺🇦</span><span><b>Тревога UA</b><small>Карта повітряних тривог</small></span></div>
 <div class="map-overlay map-live"><i class="live-dot"></i><span id="mapLiveText">Ожидаем обновление</span><span aria-hidden="true">↻</span></div>
-<div class="map-overlay map-legend"><span><i style="background:#ed343b"></i>Красный уровень</span><span><i style="background:#e8bd35"></i>Жёлтый уровень</span><span><i style="background:#43a66b"></i>Подтверждено без тревоги</span><span><i style="background:#e58a32"></i>Сигнал без подтверждения</span><span><i style="background:#8995a5"></i>Нет данных / расхождение</span></div>
+<div class="map-overlay map-legend"><span><i style="background:#ed343b"></i>Баллистическая угроза</span><span><i style="background:#e8bd35"></i>Атака БПЛА / Шахедов</span><span><i style="background:#43a66b"></i>Подтверждено без тревоги</span><span><i style="background:#8995a5"></i>Сигнал не подтверждён</span><span><i style="background:#8995a5"></i>Нет данных / расхождение</span></div>
 <div class="map-overlay map-actions"><button type="button" id="mapZoomIn" aria-label="Увеличить">+</button><button type="button" id="mapZoomOut" aria-label="Уменьшить">−</button><button type="button" id="mapLocate" aria-label="Показать всю Украину">◎</button></div></div>
-<div id="neptun-threats-status" class="source-item" style="margin-top:10px"><b>Угрозы NEPTUN</b><span id="neptunThreatSummary">Подключаем поток угроз…</span><div id="neptunThreatList" style="display:grid;gap:5px;margin-top:7px"></div><small style="display:block;margin-top:7px">Информационные данные NEPTUN, не заменяют официальные сигналы тревоги. <a href="https://neptun.in.ua/" target="_blank" rel="noopener">Данные: Карта повітряних загроз — NEPTUN</a></small></div><div class="legend">
-<span><i class="dot" style="background:#a5221d;border-color:#c16b66"></i> Красный уровень</span><span><i class="dot" style="background:#a8791d;border-color:#d1ad62"></i> Жёлтый уровень</span><span><i class="dot" style="background:#285b43;border-color:#6b9a7e"></i> Подтверждено без тревоги</span><span><i class="dot" style="background:#e58a32;border-color:#f0b36e"></i> Сигнал без подтверждения</span><span><i class="dot" style="background:#555d65;border-color:#9299a0"></i> Нет данных / расхождение</span>
-</div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный уровень не означает автоматически баллистическую угрозу.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
+<div id="neptun-threats-status" class="source-item" style="margin-top:10px"><b>Угрозы NEPTUN</b><span id="neptunThreatSummary">Подключаем поток угроз…</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px"><label for="neptunThreatType" style="font-size:12px;color:#c4ccd6">Тип угрозы</label><select id="neptunThreatType" aria-label="Фильтр по типу угрозы" style="background:#111923;color:#f2f3f4;border:1px solid #465568;border-radius:8px;padding:7px;max-width:100%"><option value="all">Все типы</option></select><label style="display:flex;gap:6px;align-items:center;font-size:12px;color:#c4ccd6"><input id="neptunShowAdvisory" type="checkbox" checked> Показывать наблюдения</label></div><div id="neptunThreatList" style="display:grid;gap:5px;margin-top:7px"></div><small style="display:block;margin-top:7px">Информационные данные NEPTUN, не заменяют официальные сигналы тревоги. <a href="https://neptun.in.ua/" target="_blank" rel="noopener">Данные: Карта повітряних загроз — NEPTUN</a></small></div><div class="legend">
+<span><i class="dot" style="background:#a5221d;border-color:#c16b66"></i> Баллистическая угроза</span><span><i class="dot" style="background:#a8791d;border-color:#d1ad62"></i> Атака БПЛА / Шахедов</span><span><i class="dot" style="background:#285b43;border-color:#6b9a7e"></i> Подтверждено без тревоги</span><span><i class="dot" style="background:#8995a5;border-color:#c0c7d0"></i> Сигнал не подтверждён</span><span><i class="dot" style="background:#555d65;border-color:#9299a0"></i> Нет данных / расхождение</span>
+</div><p style="font-size:12px;margin-top:9px">Нажми на область на карте, чтобы увидеть её название и статус. Частичная тревога обозначается штриховой границей области. Красный цвет означает любую активную угрозу баллистики — предупреждение, запуск или полёт. Стадия указывается только при подтверждении источником.</p><p style="font-size:12px;margin-top:8px">Источники данных: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a> и <a href="https://tryvoha.online/" target="_blank" rel="noopener">Tryvoha.online</a>. Это информационные агрегаторы; их статусы могут опираться на общие первичные данные.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Настройки уведомлений</h2><p>Выбери способ оповещения и области, по которым нужны звук, уведомления и push. По умолчанию выбраны все регионы.</p>
 <div class="setting-actions"><label class="region-choice"><input id="soundToggle" type="checkbox" checked> Звук</label><label class="region-choice"><input id="vibrationToggle" type="checkbox" checked> Вибрация</label><label class="region-choice"><input id="browserToggle" type="checkbox" checked> Уведомления браузера</label></div><div class="setting-actions"><button id="selectAllRegions" type="button">Выбрать все</button><button id="clearRegions" type="button" style="background:#42516a">Снять выбор</button></div><div id="regionChoices" class="settings-grid"><small>Список загрузится вместе с картой.</small></div><p id="regionPreferenceStatus" style="font-size:11px;margin-top:8px">Настройки сохраняются на этом устройстве.</p></section>
 <section class="card"><h2 style="font-size:17px;margin:0">Статусы регионов</h2><div id="regions"><p>Загружаются границы областей…</p></div></section>
@@ -77,14 +77,26 @@ const neptunThreatLayer=L.layerGroup().addTo(map);
 const neptunThreatSummary=document.getElementById('neptunThreatSummary');
 const neptunThreatList=document.getElementById('neptunThreatList');
 let neptunRealtimeClient=null,neptunUnsubscribe=null,neptunLastSnapshotAt=0,neptunSdkLoading=false,neptunLastRetryAt=0;
+let neptunThreatSnapshot=null,neptunThreatRecords=[];
+const neptunThreatTypeSelect=document.getElementById('neptunThreatType');
+const neptunShowAdvisory=document.getElementById('neptunShowAdvisory');
 const threatNames={uav:'БПЛА',recon:'Разведывательный БПЛА',missile:'Ракета',ballistic:'Баллистическая ракета',kab:'КАБ',mig31k:'МиГ-31К',fpv:'FPV-дрон',unknown:'Неизвестный тип'};
 function threatFresh(t){const stamp=timeOf(t.updatedAt);return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;}
 function threatLabel(t){return t.title||threatNames[t.type]||'Воздушная угроза';}
 function renderNeptunThreats(snapshot){
+ neptunThreatSnapshot=snapshot;
  const all=Array.isArray(snapshot&&snapshot.threats)?snapshot.threats:[];
  neptunLastSnapshotAt=Date.now();
  neptunThreatLayer.clearLayers();neptunThreatList.replaceChildren();
- const active=all.filter(t=>t&&t.status==='active'&&threatFresh(t));
+ const freshActive=all.filter(t=>t&&t.status==='active'&&threatFresh(t));
+ const availableTypes=[...new Set(freshActive.map(t=>String(t.type||'unknown'))) ].sort();
+ const selectedType=neptunThreatTypeSelect.value;
+ neptunThreatTypeSelect.replaceChildren();
+ const allOption=document.createElement('option');allOption.value='all';allOption.textContent='Все типы';neptunThreatTypeSelect.append(allOption);
+ availableTypes.forEach(type=>{const option=document.createElement('option');option.value=type;option.textContent=threatNames[type]||type;neptunThreatTypeSelect.append(option);});
+ neptunThreatTypeSelect.value=availableTypes.includes(selectedType)?selectedType:'all';
+ const active=freshActive.filter(t=>(neptunThreatTypeSelect.value==='all'||String(t.type||'unknown')===neptunThreatTypeSelect.value)&&(neptunShowAdvisory.checked||t.advisory!==true));
+ neptunThreatRecords=freshActive.filter(t=>t.advisory!==true);
  const visible=active.filter(t=>t.areaOnly!==true&&Number.isFinite(Number(t.lat))&&Number.isFinite(Number(t.lon))&&Number(t.lat)>=43&&Number(t.lat)<=53&&Number(t.lon)>=21&&Number(t.lon)<=41);
  const areaOnly=active.filter(t=>t.areaOnly===true);
  active.forEach(t=>{
@@ -99,7 +111,8 @@ function renderNeptunThreats(snapshot){
  });
  visible.forEach(t=>{
   const advisory=t.advisory===true,lat=Number(t.lat),lon=Number(t.lon);
-  const marker=L.circleMarker([lat,lon],{radius:advisory?7:9,color:advisory?'#aeb8c5':'#ffb34d',weight:2,fillColor:advisory?'#8795a8':'#e34b4b',fillOpacity:.9});
+  const threatColor=t.type==='ballistic'?'#ed343b':(t.type==='uav'?'#e8bd35':'#8995a5');
+  const marker=L.circleMarker([lat,lon],{radius:advisory?7:9,color:advisory?'#aeb8c5':threatColor,weight:2,fillColor:advisory?'#8795a8':threatColor,fillOpacity:.9});
   const details=[ '<b>'+escapeHtml(threatLabel(t))+'</b>',escapeHtml(t.region||''),escapeHtml(t.locality||t.district||''),advisory?'Наблюдение, не сигнал укрытия':'Активная отметка NEPTUN',t.heading!=null?'Курс по данным источника: '+escapeHtml(String(t.heading))+'°'+(t.presumptiveCourse===true?' (предполагаемый)':''):'Курс не указан',t.confidenceLevel?'Уровень уверенности NEPTUN: '+escapeHtml(t.confidenceLevel):'',t.sourceCount!=null?'Число источников: '+escapeHtml(String(t.sourceCount)):'',t.positionQuality==='approx'||t.presumptiveCourse===true?'Позиция приблизительная, не точная координата':(t.positionQuality==='confirmed'?'Позиция отмечена источником как подтверждённая':''),t.uncertaintyKm!=null?'Неопределённость позиции: ±'+escapeHtml(String(t.uncertaintyKm))+' км':'',t.updatedAt?'Обновлено: '+escapeHtml(new Date(timeOf(t.updatedAt)).toLocaleTimeString('ru-RU')):'' ].filter(Boolean).join('<br>');
   marker.bindPopup(details);marker.addTo(neptunThreatLayer);
  });
@@ -108,8 +121,10 @@ function renderNeptunThreats(snapshot){
  }else{
   neptunThreatSummary.textContent='Активных подтверждённых записей в последнем свежем снимке нет. Это не означает отсутствия опасности.';
  }
- if(!active.length){const empty=document.createElement('small');empty.textContent='Сейчас нет активных записей угроз в свежем снимке NEPTUN.';neptunThreatList.append(empty);}
+ if(!active.length){const empty=document.createElement('small');empty.textContent=freshActive.length?'Нет записей по выбранным фильтрам.':'Сейчас нет активных записей угроз в свежем снимке NEPTUN.';neptunThreatList.append(empty);}
 }
+neptunThreatTypeSelect.addEventListener('change',()=>{if(neptunThreatSnapshot)renderNeptunThreats(neptunThreatSnapshot);});
+neptunShowAdvisory.addEventListener('change',()=>{if(neptunThreatSnapshot)renderNeptunThreats(neptunThreatSnapshot);});
 function startNeptunThreatStream(){
  if(neptunRealtimeClient)return;
  if(!window.NEPTUN||typeof window.NEPTUN.RealtimeClient!=='function'){
@@ -173,7 +188,7 @@ const soundToggle=document.getElementById('soundToggle'),vibrationToggle=documen
 let soundEnabled=localStorage.getItem('soundEnabled')!=='false',vibrationEnabled=localStorage.getItem('vibrationEnabled')!=='false',browserNotifyEnabled=localStorage.getItem('browserNotifyEnabled')!=='false';
 soundToggle.checked=soundEnabled;vibrationToggle.checked=vibrationEnabled;browserToggle.checked=browserNotifyEnabled;
 soundToggle.addEventListener('change',()=>{soundEnabled=soundToggle.checked;localStorage.setItem('soundEnabled',String(soundEnabled));});
-vibrationToggle.addEventListener('change',()=>{vibrationEnabled=vibrationToggle.checked;localStorage.setItem('vibrationEnabled',String(vibrationEnabled));});
+vibrationToggle.addEventListener('change',()=>{vibrationEnabled=vibrationToggle.checked;localStorage.setItem('vibrationEnabled',String(vibrationEnabled));syncPushPreferences();});
 browserToggle.addEventListener('change',async()=>{browserNotifyEnabled=browserToggle.checked;localStorage.setItem('browserNotifyEnabled',String(browserNotifyEnabled));if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}});
 let alertsEnabled=localStorage.getItem('alertsEnabled')==='true';
 let firstRefresh=true,audioContext=null;
@@ -233,7 +248,7 @@ function notifyChange(name,s,started){
  if(soundEnabled)beep(started?[.32,.32,.32]:[.16,.16]);
  if(browserNotifyEnabled&&'Notification'in window&&Notification.permission==='granted'){
   const title=started?'Воздушная тревога':'Отбой тревоги';
-  const body=name+(started?' — зафиксирована тревога по данным источников.':' — тревога больше не отображается источниками.');
+  const body=name+(started?' — подтверждена главным источником NEPTUN.':' — NEPTUN больше не показывает тревогу.');
   if('serviceWorker'in navigator)navigator.serviceWorker.ready.then(reg=>reg.showNotification(title,{body,icon:'./icon.svg',tag:'alert-'+slugOf(name),renotify:false,data:{url:'./'}})).catch(()=>{});
   else try{new Notification(title,{body,icon:'./icon.svg',tag:'alert-'+slugOf(name),renotify:false});}catch(e){}
  }
@@ -289,7 +304,7 @@ pushButton.addEventListener('click',async()=>{
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeVapidKey(pushPublicKey)});
   pushSubscription=sub;
-  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...sub.toJSON(),regions:[...selectedRegions]})});
+  const response=await fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...sub.toJSON(),regions:[...selectedRegions],vibration:vibrationEnabled})});
   if(!response.ok)throw Error('Сервер не принял подписку.');
   disablePushButton.style.display='inline-block';
   pushSettings.textContent='Push подключён. Сервер сможет присылать уведомления при закрытом сайте, если браузер и телефон разрешают фоновые уведомления.';
@@ -348,7 +363,7 @@ function saveRegionSelection(){
 }
 function syncPushPreferences(){
  if(!pushApi||!pushSubscription)return;
- fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...pushSubscription.toJSON(),regions:[...selectedRegions]})})
+ fetch(pushApi+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...pushSubscription.toJSON(),regions:[...selectedRegions],vibration:vibrationEnabled})})
  .then(r=>{if(!r.ok)throw Error('HTTP '+r.status);pushSettings.textContent='Push-настройки регионов обновлены.';})
  .catch(()=>{pushSettings.textContent='Не удалось обновить фильтр push. Возможно, Worker ещё не обновлён.';});
 }
@@ -436,9 +451,9 @@ function labelOf(s){
  if(!s.known)return 'НЕТ ДАННЫХ';
  if(!s.active)return 'НЕТ ТРЕВОГИ';
  const part=s.partial?' · ЧАСТИЧНО':'';
- if(s.level==='yellow')return 'ЖЁЛТЫЙ УРОВЕНЬ'+part;
- if(s.level==='red')return 'КРАСНЫЙ УРОВЕНЬ'+part;
- return 'ТРЕВОГА · УРОВЕНЬ НЕ УТОЧНЁН'+part;
+ if(s.level==='yellow')return 'ЖЁЛТЫЙ · АТАКА БПЛА / ШАХЕДЫ · NEPTUN'+part;
+ if(s.level==='red')return 'КРАСНЫЙ · УГРОЗА БАЛЛИСТИКИ · NEPTUN'+part;
+ return 'ТРЕВОГА · ТИП УГРОЗЫ НЕ УТОЧНЁН'+part;
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function applyState(name,s){
@@ -447,7 +462,7 @@ function applyState(name,s){
  const previous=confirmedStates.get(key);
  if(!firstRefresh&&previous&&s.known&&previous.active!==s.active){recordLocalEvent(name,s.active);notifyChange(name,s,s.active);}
  if(s.known)confirmedStates.set(key,{known:true,active:s.active,level:s.level});
- s.color=s.active?(s.known?(s.level==='yellow'?'#e8bd35':(s.level==='red'?'#ed343b':'#e58a32')):'#e58a32'):(s.conflict?'#8995a5':(!s.known?'#344c70':'#43a66b'));
+ s.color=s.active?(s.known&&s.level==='yellow'?'#e8bd35':(s.known&&s.level==='red'?'#ed343b':'#8995a5')):(s.conflict?'#8995a5':(!s.known?'#8995a5':'#43a66b'));
  states.set(key,s);layer.setStyle(styleOf(s));
  const el=document.querySelector('[data-region="'+CSS.escape(key)+'"] .pill');
  if(el){el.textContent=labelOf(s);el.style.background=s.color;el.style.color=s.level==='yellow'?'#182538':'#fff';const d=el.parentElement.querySelector('.duration');if(d)d.textContent=s.active?formatDuration(s.startedAt):'';}
@@ -466,8 +481,18 @@ function drawList(features){
 }
 async function getJson(url){
  const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
- try{const r=await fetch(url,{cache:'no-store',signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.json();}
- finally{clearTimeout(t);}
+ try{
+  const r=await fetch(url,{cache:'no-store',signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);
+  const data=await r.json();if(!data||typeof data!=='object'||Array.isArray(data))throw Error('Invalid source payload');
+  const ageSeconds=Number(r.headers.get('Age')),dateHeader=Date.parse(r.headers.get('Date')||'');
+  return {...data,_fetchedAt:Date.now(),_httpDate:Number.isFinite(dateHeader)?dateHeader:null,_cacheAgeMs:Number.isFinite(ageSeconds)&&ageSeconds>=0?ageSeconds*1000:0};
+ }finally{clearTimeout(t);}
+}
+function threatLevelForRegion(name){
+ const matches=(neptunThreatRecords||[]).filter(t=>t&&t.status==='active'&&t.advisory!==true&&threatFresh(t)&&norm(t.region)===norm(name));
+ if(matches.some(t=>String(t.type||'').toLowerCase()==='ballistic'))return 'red';
+ if(matches.some(t=>String(t.type||'').toLowerCase()==='uav'))return 'yellow';
+ return null;
 }
 function calculate(n,t){
  const nO=n&&Array.isArray(n.oblasts)?n.oblasts:[],nR=n&&Array.isArray(n.raions)?n.raions:[];
@@ -486,17 +511,19 @@ function calculate(n,t){
   const tPart=matches.some(x=>x.type==='district');
   const statusSupported=!!slug&&slug!=='crimea'&&slug!=='sevastopol';
   const nActive=nFull||nPart,tActive=tFull||tPart;
-  // При доступном NEPTUN статус определяет он; Tryvoha не может переопределить главный источник.
-  const active=n?nActive:tActive;
+  const threatLevel=threatLevelForRegion(name),threatActive=!!threatLevel;
+  // Поток угроз NEPTUN тоже подтверждает тип и наличие угрозы, даже если региональный список тревог ещё не обновился.
+  // Tryvoha не может переопределить основной источник.
+  const active=n?(nActive||threatActive):tActive;
   // Сравниваем только два доступных источника; недоступный источник не считается расхождением.
   const conflict=!!n&&tFresh&&statusSupported&&nActive!==tActive;
-  const partial=n?(nPart&&!nFull):(tPart&&!tFull);
-  let level=matches.some(x=>x.level==='red')?'red':(matches.some(x=>x.level==='yellow')?'yellow':null);
+  const partial=n?(nPart&&!nFull):(tFresh&&tPart&&!tFull);
+  let level=active?threatLevel:null;
   if(!level&&active)level='unknown';
   // NEPTUN — главный источник статуса тревог; Tryvoha используется для дополнительной сверки.
-  const known=!!n&&statusSupported;
+  const known=(!!n&&statusSupported)||threatActive;
   const tItems=matches.filter(x=>x.slug===slug||x.oblast_slug===slug);
-  out.push([name,{known,active,partial,conflict,level,items:[...nFullItems,...nPartItems,...tItems]}]);
+  out.push([name,{known,active,partial,conflict,level,items:[...nFullItems,...nPartItems,...(tFresh?tItems:[])]}]);
  }
  return {out,tFresh};
 }
@@ -510,10 +537,16 @@ async function refresh(){
  try{r=await Promise.allSettled([getJson('https://neptun.in.ua/api/v1/alerts'),getJson('https://tryvoha.online/api/v1/alerts')]);}catch(e){refreshInProgress=false;return;}
  const nCandidate=r[0].status==='fulfilled'&&Array.isArray(r[0].value.oblasts)&&Array.isArray(r[0].value.raions)?r[0].value:null;
  const tCandidate=r[1].status==='fulfilled'&&Array.isArray(r[1].value.alerts)?r[1].value:null;
- const fresh=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;};
- const n=nCandidate&&fresh(nCandidate)?nCandidate:null;
+ const freshNeptun=value=>{
+  const stamp=timeOf(value&&(value.serverTime||value.updated_at||value.updatedAt||value.timestamp));
+  const fetchedAt=Number(value&&value._fetchedAt)||0,httpDate=Number(value&&value._httpDate)||0,cacheAge=Number(value&&value._cacheAgeMs)||0;
+  const age=stamp>0?Date.now()-stamp:(httpDate>0?Date.now()-httpDate:(fetchedAt>0?Date.now()-fetchedAt:Infinity));
+  return age>=-30000&&age+cacheAge<180000;
+ };
+ const freshTimestamped=value=>{const stamp=timeOf(value&&(value.updated_at||value.updatedAt||value.timestamp));return stamp>0&&Date.now()-stamp>=-30000&&Date.now()-stamp<180000;};
+ const n=nCandidate&&freshNeptun(nCandidate)?nCandidate:null;
  const tStamp=tCandidate&&(tCandidate.updated_at||tCandidate.updatedAt||tCandidate.timestamp);
- const t=tCandidate&&timeOf(tStamp)>0&&fresh(tCandidate)?tCandidate:null;
+ const t=tCandidate&&timeOf(tStamp)>0&&freshTimestamped(tCandidate)?tCandidate:null;
  const data=calculate(n,t);
  data.out.forEach(([name,state])=>applyState(name,state));
  firstRefresh=false;
@@ -529,10 +562,10 @@ async function refresh(){
  document.getElementById('countYellow').textContent=yellow;
  document.getElementById('countClear').textContent=clear;
  document.getElementById('countUnknown').textContent=unknown;
- document.getElementById('summaryText').textContent=unconfirmed?'Есть сигналы тревоги Tryvoha без подтверждения главным источником NEPTUN: '+unconfirmed+'. Они показаны красным/жёлтым, но уведомления по ним не отправляются.':(conflicts?'Расхождение источников по регионам: '+conflicts+'. Проверьте сообщения источников.':(activeUnknown?'Активных регионов без уточнённого уровня: '+activeUnknown+'.':(red+yellow?'Есть регионы с активными тревогами.':(unknown?'Подтверждённых активных тревог нет; нет данных по '+unknown+' регионам.':'Подтверждённые активные тревоги не обнаружены.'))));
+ document.getElementById('summaryText').textContent=unconfirmed?'Сигналы Tryvoha без подтверждения главным источником NEPTUN: '+unconfirmed+'. Они отмечены нейтральным серым цветом как неподтверждённые, не включены в подтверждённые тревоги и не запускают уведомления.':(conflicts?'Расхождение источников по регионам: '+conflicts+'. Статус отмечен нейтральным цветом; проверьте данные источников.':(activeUnknown?'NEPTUN подтвердил тревогу, но уровень не уточнён: '+activeUnknown+'.':(red+yellow?'Есть регионы с подтверждёнными активными тревогами.':(unknown?'Нет подтверждённых активных тревог; отсутствуют достоверные данные по '+unknown+' регионам.':'NEPTUN не обнаружил подтверждённых активных тревог.'))));
  connection.textContent=n?(data.tFresh?'Главный источник NEPTUN работает · сверка доступна':'Главный источник NEPTUN работает · дополнительная сверка недоступна'):(data.tFresh?'NEPTUN недоступен · есть только дополнительный источник':'Нет связи с источниками');
  const sourceTime=value=>{const stamp=timeOf(value);return stamp?new Date(stamp).toLocaleTimeString('ru-RU'):'время обновления в ответе не указано';};
- sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
+ sourceNeptun.textContent=n?'Ответ получен; '+sourceTime(n.serverTime||n.updated_at||n.updatedAt||n.timestamp):(nCandidate?'Устарели данные; последнее обновление: '+sourceTime(nCandidate.serverTime||nCandidate.updated_at||nCandidate.updatedAt||nCandidate.timestamp):'Нет ответа');
  sourceTryvoha.textContent=t?'Свежий ответ; обновлено '+sourceTime(t.updated_at||t.updatedAt||t.timestamp):(tCandidate?'Устарели данные; последнее обновление: '+sourceTime(tCandidate.updated_at||tCandidate.updatedAt||tCandidate.timestamp):'Нет ответа или нет метки времени');
  lastCheck.textContent='Последняя проверка сайта: '+new Date(checkedAt).toLocaleTimeString('ru-RU')+'. Автопроверка каждую минуту.';
 document.getElementById('mapLiveText').textContent='Перевірено: '+new Date(checkedAt).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
